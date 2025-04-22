@@ -1,27 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   is_whitespace.c                                    :+:      :+:    :+:   */
+/*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/17 14:00:48 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/21 15:36:57 by ayel-arr         ###   ########.fr       */
+/*   Created: 2025/04/21 15:58:57 by ayel-arr          #+#    #+#             */
+/*   Updated: 2025/04/21 15:59:46 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "minishell.h"
 
-int	is_whitespace(char c)
+int	check_empty_string(char *s)
 {
-	if ((c >= 9 && c <= 13) || c == 32 || c == 0)
-		return (1);
-	return (0);
-}
+	int	i;
+	int	count;
 
-int	is_quote(char c)
-{
-	if (c == '\'' || c == '\"')
+	i = 0;
+	count = 0;
+	while (s[i])
+	{
+		if (is_whitespace(s[i]))
+			count++;
+		i++;
+	}
+	if (count == i)
 		return (1);
 	return (0);
 }

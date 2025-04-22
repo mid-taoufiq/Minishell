@@ -1,27 +1,27 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_strncmp.c                                       :+:      :+:    :+:   */
+/*   signals_handler.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/28 22:31:45 by ayel-arr          #+#    #+#             */
-/*   Updated: 2024/10/26 21:21:10 by ayel-arr         ###   ########.fr       */
+/*   Created: 2025/04/22 08:37:26 by tibarike          #+#    #+#             */
+/*   Updated: 2025/04/22 08:43:44 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "minishell.h"
 
-int	ft_strncmp(char *s1, char *s2, unsigned int n)
+void	sigint_handler(int sig)
 {
-	unsigned int	i;
+	(void)sig;
+	printf("\n");
+	rl_replace_line("", 0);
+	rl_on_new_line();
+	rl_redisplay();
+}
 
-	i = 0;
-	if (n == 0)
-		return (0);
-	while (s1[i] == s2[i] && i < n - 1 && s1[i] && s2[i])
-	{
-		i++;
-	}
-	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+void	sigquit_handler(int sig)
+{
+	(void)sig;
 }

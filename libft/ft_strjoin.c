@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_strjoin.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 20:02:39 by ayel-arr          #+#    #+#             */
-/*   Updated: 2024/10/25 14:32:13 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/04/22 15:38:52 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ static void	copy(char *s, char const *s1, int *i)
 	}
 }
 
-char	*ft_strjoin(char *s1, char *s2)
+char	*ft_strjoin(char const *s1, char const *s2)
 {
 	int		i;
 	int		j;
@@ -45,6 +45,5 @@ char	*ft_strjoin(char *s1, char *s2)
 		j++;
 	}
 	s[i + j] = '\0';
-	free(s1);
 	return (s);
 }

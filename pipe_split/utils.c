@@ -1,27 +1,41 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   is_whitespace.c                                    :+:      :+:    :+:   */
+/*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/17 14:00:48 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/21 15:36:57 by ayel-arr         ###   ########.fr       */
+/*   Created: 2025/04/21 15:33:44 by ayel-arr          #+#    #+#             */
+/*   Updated: 2025/04/21 15:40:30 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "libft.h"
+#include "minishell.h"
 
-int	is_whitespace(char c)
+int	check_quote(char c, int q)
 {
-	if ((c >= 9 && c <= 13) || c == 32 || c == 0)
+	if (q == 0 && c == '\'')
 		return (1);
-	return (0);
+	if (q == 0 && c == '\"')
+		return (2);
+	if (q == 2 && c == '\"')
+		return (0);
+	if (q == 1 && c == '\'')
+		return (0);
+	return (q);
 }
 
-int	is_quote(char c)
+int	ft_strlen_pipe(char *src, char c, char q)
 {
-	if (c == '\'' || c == '\"')
-		return (1);
-	return (0);
+	int	i;
+
+	i = 0;
+	while (src[i] != '\0')
+	{
+		q = check_quote(src[i], q);
+		if (src[i] == c && q == 0)
+			break ;
+		i++;
+	}
+	return (i);
 }

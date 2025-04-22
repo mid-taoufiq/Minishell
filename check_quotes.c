@@ -27,6 +27,22 @@ void	nop(void *nothing)
 	nothing = nothing + 1 - 1;
 }
 
+void	push_sigle_quote(t_list	**head, char *last, char *s)
+{
+	if (*last == '0')
+		ft_lstadd_back(head, ft_lstnew(s));
+	if (*last == '\'')
+		pop_back(*head);
+}
+
+void	push_double_quote(t_list	**head, char *last, char *s)
+{
+	if (*last == '0')
+		ft_lstadd_back(head, ft_lstnew(s));
+	if (*last == '\"')
+		pop_back(*head);
+}
+
 int	valid_quotes(char	*str)
 {
 	int		i;
@@ -39,19 +55,9 @@ int	valid_quotes(char	*str)
 	{
 		last = ft_lstlast(head)->content;
 		if (str[i] == '\'')
-		{
-			if (*last == '0')
-				ft_lstadd_back(&head, ft_lstnew(str + i));
-			if (*last == '\'')
-				pop_back(head);
-		}
+			push_sigle_quote(&head, last, str + i);
 		else if (str[i] == '\"')
-		{
-			if (*last == '0')
-				ft_lstadd_back(&head, ft_lstnew(str + i));
-			if (*last == '\"')
-				pop_back(head);
-		}
+			push_double_quote(&head, last, str + i);
 		i++;
 	}
 	if (ft_lstsize(head) == 1)

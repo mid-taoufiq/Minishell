@@ -1,27 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   is_whitespace.c                                    :+:      :+:    :+:   */
+/*   ft_strcmp.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/17 14:00:48 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/21 15:36:57 by ayel-arr         ###   ########.fr       */
+/*   Created: 2024/06/28 22:31:45 by ayel-arr          #+#    #+#             */
+/*   Updated: 2025/04/22 13:45:33 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-int	is_whitespace(char c)
+int	ft_strcmp(char *s1, char *s2)
 {
-	if ((c >= 9 && c <= 13) || c == 32 || c == 0)
-		return (1);
-	return (0);
-}
+	unsigned int	i;
 
-int	is_quote(char c)
-{
-	if (c == '\'' || c == '\"')
-		return (1);
-	return (0);
+	i = 0;
+	while (s1[i] == s2[i] && s1[i] && s2[i])
+	{
+		i++;
+	}
+	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }
