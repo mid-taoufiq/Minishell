@@ -1,9 +1,10 @@
 CC = cc
 CFLAGS = -Wall -Werror -Wextra
 RFLAGS = -lreadline -lncurses
-SRCS = main.c syntax/syntax_error.c syntax/utils.c check_quotes.c split_input.c pipe_split/ft_split_pipe.c pipe_split/utils.c sep_redirection.c expanding.c
+SRCS = main.c syntax/syntax_error.c syntax/utils.c syntax/check_quotes.c split_input.c pipe_split/ft_split_pipe.c pipe_split/utils.c sep_redirection.c expanding.c \
+		export/export.c export/utils.c execute.c built_ins.c quotes_remover.c export/unset.c
 OBJECTS = $(SRCS:%.c=%.o)
-LIBFT_SRCS = libft/ft_atoi.c libft/ft_bzero.c libft/ft_calloc.c libft/ft_isalnum.c libft/ft_isalpha.c \
+LIBFT_SRCS = libft/ft_atol.c libft/ft_bzero.c libft/ft_calloc.c libft/ft_isalnum.c libft/ft_isalpha.c \
             libft/ft_isascii.c libft/ft_isdigit.c libft/ft_isprint.c libft/ft_itoa.c libft/ft_memchr.c \
             libft/ft_memcmp.c libft/ft_memcpy.c libft/ft_memmove.c libft/ft_memset.c libft/ft_putchar_fd.c \
             libft/ft_putendl_fd.c libft/ft_putnbr_fd.c libft/ft_putstr_fd.c libft/ft_split.c \

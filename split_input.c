@@ -6,205 +6,133 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/14 14:02:31 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/21 16:21:59 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/04/25 10:58:58 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static int	ft_strlen_plus(char *s, char c)
+static	void	skip(char quote, int *i, char *str)
+{
+	(*i)++;
+	while (str[*i] != quote)
+		(*i)++;
+}
+
+char	*ft_strindup(char *s, int *i)
+{
+	int		ii;
+	char	*ret;
+	char	c;
+
+	ii = 0;
+	while (!is_whitespace(s[ii]))
+	{
+		if (is_quote(s[ii]))
+			skip(s[ii], &ii, s);
+		ii++;
+	}
+	ret = malloc((ii + 1) * sizeof(char));
+	if (!ret)
+		return (NULL);
+	ii = 0;
+	while (!is_whitespace(s[ii]))
+	{
+		if (is_quote(s[ii]))
+		{
+			c = s[ii];
+			ret[ii] = s[ii];
+			ii++;
+			while (s[ii] != c)
+			{
+				ret[ii] = s[ii];
+				ii++;
+			}
+		}
+		ret[ii] = s[ii];
+		ii++;
+	}
+	ret[ii] = '\0';
+	*i = *i + ii;
+	return (ret);
+}
+
+int	wordcount(char *s)
 {
 	int	i;
+	int q;
+	int count;
+	int	f;
 
 	i = 0;
+	f = 1;
+	q = 0;
+	count = 0;
 	while (s[i])
 	{
-		if (s[i] == c && is_whitespace(s[i + 1]))
-			break ;
-		else if (s[i] == c && !is_whitespace(s[i + 1]))
+		if (s[i] == '\'' && q == 0)
+			q = 1;
+		else if (s[i] == '\'' && q == 1)
+			q = 0;
+		else if (s[i] == '\"' && q == 0)
+			q = 2;
+		else if (s[i] == '\"' && q == 2)
+			q = 0;
+		else if (is_whitespace(s[i]) && !is_whitespace(s[i + 1]) && q == 0)
+			f = 1;
+		else if (f == 1 && !is_whitespace(s[i]))
 		{
-			while (!is_whitespace(s[i]))
-				i++;
-			return (i);
+			count++;
+			f = 0;
 		}
 		i++;
 	}
-	return (i);
+	return (count);
 }
 
-static void	ft_strcpy_plus(char *src, char *dst, char c)
-{
-	int	i;
-	int	j;
-
-	i = 0;
-	j = 1;
-	while (src[i])
-	{
-		if (src[i] == c && is_whitespace(src[i + 1]))
-			break ;
-		else if (src[i] == c && !is_whitespace(src[i + 1]))
-		{
-			while (!is_whitespace(src[i]))
-			{
-				dst[j] = src[i];
-				i++;
-				j++;
-			}
-			dst[0] = c;
-			dst[j] = '\0';
-			return ;
-		}
-		dst[j] = src[i];
-		j++;
-		i++;
-	}
-	dst[0] = c;
-	dst[j + 1] = '\0';
-	dst[j] = c;
-}
-
-static	char	*ft_strindup_quote(char *src, char c)
-{
-	char	*s;
-
-	src++;
-	s = (char *)malloc(ft_strlen_plus(src, c) + 3);
-	if (!s)
-		return (free(s), NULL);
-	ft_strcpy_plus(src, s, c);
-	return (s);
-}
-
-static	char	*ft_strindup(char *src, char c)
-{
-	int		i;
-	char	*s;
-
-	if (c == '\'' || c == '\"')
-		return (ft_strindup_quote(src, c));
-	i = 0;
-	while (!is_whitespace(src[i]))
-		i++;
-	s = (char *)malloc(i + 1);
-	if (!s)
-		return (free(s), NULL);
-	i = 0;
-	while (!is_whitespace(src[i]))
-	{
-		s[i] = src[i];
-		i++;
-	}
-	s[i] = '\0';
-	return (s);
-}
-
-static	int	word_count(char	*s, char c)
-{
-	int		arr[3];
-	char	tmp;
-
-	if (s == NULL)
-		return (-100);
-	ft_bzero(arr, 12);
-	tmp = c;
-	while (s[arr[0]])
-	{
-		if (s[arr[0]] == c || (c == ' ' && is_whitespace(s[arr[0]])))
-		{
-			if (is_whitespace(c))
-			{
-				arr[1] = 0;
-				c = tmp;
-			}
-			else if (is_quote(c) && is_whitespace(s[arr[0] + 1]))
-			{
-				arr[1] = 0;
-				c = tmp;
-			}
-			else if (is_quote(c) && !is_whitespace(s[arr[0] + 1]))
-				c = tmp;
-		}
-		else if (s[arr[0]] != c && arr[1] == 0)
-		{
-			if (s[arr[0]] == '\'' || s[arr[0]] == '\"')
-				c = s[arr[0]];
-			arr[1] = 1;
-			arr[2]++;
-		}
-		arr[0]++;
-	}
-	return (arr[2]);
-}
-
-static void	*free_all(char **arr)
+static void	freedbl(char **dbl, int size)
 {
 	int		i;
 
 	i = 0;
-	while (arr[i])
+	while (i < size)
 	{
-		free(arr[i]);
+		free(dbl[i]);
 		i++;
 	}
-	free(arr[i]);
-	free(arr);
-	return (NULL);
+	free(dbl);
 }
 
-static void	setvars(int arr[3], char *tmp, char *c, char idk)
+char	**ft_split_input(char *str)
 {
-	if (idk == 0)
-	{
-		arr[0] = 0;
-		arr[1] = 0;
-		arr[2] = 0;
-		*tmp = *c;
-	}
-	else if (idk == 1)
-	{
-		arr[2] = 0;
-		*c = *tmp;
-	}
-}
+	char	**ret;
+	int		i;
+	int		count;
+	char	q;
+	int		f;
 
-// iterators[0] : i
-// iterators[1] : words counter
-// iterators[2] : 1 found a word, 0 found a space
-
-char	**ft_split_input(char const *s, char c)
-{
-	int		iterators[3];
-	char	**arr;
-	char	tmp;
-
-	setvars(iterators, &tmp, &c, 0);
-	arr = (char **)malloc((word_count((char *)s, c) + 1) * sizeof(char *));
-	if (!arr)
+	i = 0;
+	q = 0;
+	f = 1;
+	count = 0;
+	ret = malloc((wordcount(str) + 1) * sizeof(char *));
+	if (!ret)
 		return (NULL);
-	while (s[iterators[0]])
+	while (str[i])
 	{
-		if (s[iterators[0]] == c
-			|| (c == ' ' && is_whitespace(s[iterators[0]])))
+		if (is_whitespace(str[i]))
+			f = 1;
+		else if (f == 1 && !is_whitespace(str[i]))
 		{
-			if (is_whitespace(c))
-				setvars(iterators, &tmp, &c, 1);
-			else if (is_quote(c) && is_whitespace(s[iterators[0] + 1]))
-				setvars(iterators, &tmp, &c, 1);
-			else if (is_quote(c) && !is_whitespace(s[iterators[0] + 1]))
-				c = tmp;
+			ret[count] = ft_strindup(str + i, &i);
+			if (!ret[count])
+				return (freedbl(ret, count) , NULL);
+			count++;
+			f = 0;
+			continue ;
 		}
-		else if (s[iterators[0]] != c && iterators[2] == 0)
-		{
-			if (s[iterators[0]] == '\'' || s[iterators[0]] == '\"')
-				c = s[iterators[0]];
-			arr[iterators[1]] = ft_strindup((char *)(s + iterators[0]), c);
-			if (arr[iterators[1]] == NULL)
-				return (free_all(arr));
-			iterators[2] = 1;
-			iterators[1]++;
-		}
-		iterators[0]++;
+		i++;
 	}
-	return (arr[iterators[1]] = NULL, arr);
+	ret[count] = NULL;
+	return (ret);
 }

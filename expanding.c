@@ -6,13 +6,13 @@
 /*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/19 15:12:31 by tibarike          #+#    #+#             */
-/*   Updated: 2025/04/20 13:48:20 by tibarike         ###   ########.fr       */
+/*   Updated: 2025/04/27 14:21:23 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static char	*exctract_dollar(char *str, int *i, char *res)
+static char	*exctract_dollar(char *str, int *i, char *res, t_env *envs)
 {
 	char	*var;
 	char	*val;
@@ -31,11 +31,14 @@ static char	*exctract_dollar(char *str, int *i, char *res)
 			(*i)++;
 		}
 		var = ft_substr(str, start, len);
-		val = getenv(var);
+		if (!var)
+			return (perror("malloc"), NULL);
+		val = ft_getenv(envs, var);
 		free(var);
 	}
 	var = ft_strjoin(res, val);
-	free(res);
+	if (!var)
+		return (perror("malloc"), free(res), free(val), NULL);
 	return (var);
 }
 
@@ -59,7 +62,7 @@ static void	init(int *i, bool *in_double, bool *in_single, char **result)
 	*result = ft_strdup("");
 }
 
-static char	*expand_parse(char *str)
+static char	*expand_parse(char *str, t_env *envs)
 {
 	int		i;
 	bool	in_single;
@@ -67,28 +70,48 @@ static char	*expand_parse(char *str)
 	char	*result;
 
 	init(&i, &in_double, &in_single, &result);
+	if (!result)
+		return (perror("malloc"), NULL);
 	while (str[i])
 	{
 		if (str[i] == '\'' && !in_double)
 		{
+			push_char(&result, str[i]);
+			if (!result)
+				return (perror("malloc"), NULL);
 			in_single = !in_single;
 			i++;
 		}
 		else if (str[i] == '"' && !in_single)
 		{
+			push_char(&result, str[i]);
+			if (!result)
+				return (perror("malloc"), NULL);
 			in_double = !in_double;
 			i++;
 		}
 		else if (str[i] == '$' && !in_single)
-			result = exctract_dollar(str, &i, result);
+		{
+			result = exctract_dollar(str, &i, result, envs);
+			if (!result)
+				return (NULL);
+		}
 		else
-			(push_char(&result, str[i]), i++);
+		{
+			push_char(&result, str[i]);
+			if (!result)
+				return (perror("malloc"), NULL);
+			i++;
+		}
 	}
 	return (result);
 }
 
-void	expand(t_cmd *all_cmds, int i, int z, char *tmp)
+int	expand(t_cmd *all_cmds, int i, int z, t_env *envs)
 {
+	char	*tmp;
+
+	tmp = NULL;
 	while (all_cmds[i].cmd)
 	{
 		z = 0;
@@ -96,7 +119,9 @@ void	expand(t_cmd *all_cmds, int i, int z, char *tmp)
 		{
 			if (ft_strchr(all_cmds[i].cmd[z], '$'))
 			{
-				tmp = expand_parse(all_cmds[i].cmd[z]);
+				tmp = expand_parse(all_cmds[i].cmd[z], envs);
+				if (!tmp)
+					return (1);
 				(free(all_cmds[i].cmd[z]), all_cmds[i].cmd[z] = tmp);
 			}
 			z++;
@@ -106,7 +131,9 @@ void	expand(t_cmd *all_cmds, int i, int z, char *tmp)
 		{
 			if (ft_strchr(all_cmds[i].redirection[z].file, '$'))
 			{
-				tmp = expand_parse(all_cmds[i].redirection[z].file);
+				tmp = expand_parse(all_cmds[i].redirection[z].file, envs);
+				if (!tmp)
+					return (1);
 				free(all_cmds[i].redirection[z].file);
 				all_cmds[i].redirection[z].file = tmp;
 			}
@@ -114,4 +141,5 @@ void	expand(t_cmd *all_cmds, int i, int z, char *tmp)
 		}
 		i++;
 	}
+	return (0);
 }

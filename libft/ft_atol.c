@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_atoi.c                                          :+:      :+:    :+:   */
+/*   ft_atol.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/21 15:16:09 by ayel-arr          #+#    #+#             */
-/*   Updated: 2024/10/26 16:24:32 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/04/27 15:30:18 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,25 +27,31 @@ static void	pre(const char **ptr, int *sign)
 	}
 }
 
-int	ft_atoi(const char *ptr)
+long	ft_atol(const char *ptr, int *success)
 {
 	int			sign;
-	long long	total;
+	long		total;
+	long		last;
 
 	sign = 1;
 	total = 0;
+	last = 0;
+	if (ptr == NULL)
+		return (total);
 	pre(&ptr, &sign);
+	if (!(*ptr >= '0' && *ptr <= '9'))
+		return (*success = 0, 0);
 	while (*ptr >= '0' && *ptr <= '9')
 	{
 		total = (total * 10) + (*ptr - '0');
-		if (total > (LLONG_MAX - (*ptr - '0')) / 10)
-		{
-			if (sign == 1)
-				return (-1);
-			if (sign == -1)
-				return (0);
-		}
+		if (sign == -1 && (total * sign) > (last * sign))
+			return (*success = 0, 0);
+		if (sign == 1 && total < last)
+			return (*success = 0, 0);
+		last = total;
 		ptr++;
 	}
-	return ((int)(total * sign));
+	if (*ptr != '\0')
+		return (*success = 0, 0);
+	return (total * sign);
 }
