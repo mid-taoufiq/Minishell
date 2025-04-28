@@ -37,7 +37,7 @@ void	execute(t_cmd *all_cmds, t_env *env)
 		else if (!ft_strcmp(all_cmds[i].cmd[0], "echo"))
 			builtin_echo(all_cmds[i].cmd);
 		else if (!ft_strcmp(all_cmds[i].cmd[0], "cd"))
-			builtin_cd(all_cmds[i].cmd, env, cmds_size);
+			builtin_cd(all_cmds[i].cmd, cmds_size);
 		else if (!ft_strcmp(all_cmds[i].cmd[0], "pwd"))
 			builtin_pwd();
 		else if (!ft_strcmp(all_cmds[i].cmd[0], "exit"))

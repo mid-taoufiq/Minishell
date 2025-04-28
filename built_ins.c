@@ -86,12 +86,13 @@ void	builtin_pwd(void)
 	}
 }
 
-int	builtin_cd(char **args, t_env *env, int cmds_size)
+int	builtin_cd(char **args, int cmds_size)
 {
-	char	*old_pwd;
-	char	*path;
-	char	*tmp;
-	int		i;
+	char		*old_pwd;
+	char		*path;
+	char		*tmp;
+	int			i;
+	struct stat	info;
 
 	i = argslen(args);
 	if (i >= 3)
@@ -125,8 +126,13 @@ int	builtin_cd(char **args, t_env *env, int cmds_size)
 				return (1);
 		}
 	}
-	if (chdir(path) != 0)
-		return (perror("cd"), free(path), 1);
+	if (stat(path, &info) != 0)
+		return (ft_putstr_fd("cd: No such file or directory\n", 2), 1);
+	if (!S_ISDIR(info.st_mode))
+		return (ft_putstr_fd("cd: Not a directory\n", 2), 1);
+	if (cmds_size > 1)
+		return (free(path), 1);
+	chdir(path);
 	if (i != 1)
 		free(path);
 	return (0);

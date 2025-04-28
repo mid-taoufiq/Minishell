@@ -16,6 +16,7 @@
 # include <stdio.h>
 # include <limits.h>
 # include <stdlib.h>
+# include <sys/stat.h>
 # include <stdbool.h>
 # include <readline/readline.h>
 # include <readline/history.h>
@@ -59,7 +60,7 @@ int		expand(t_cmd *all_cmds, int i, int z, t_env *envs);
 void	sigint_handler(int sig);
 void	sigquit_handler(int sig);
 void	builtin_pwd(void);
-int		builtin_cd(char **args, t_env *env, int cmds_size);
+int		builtin_cd(char **args, int cmds_size);
 void	builtin_echo(char **args);
 void	builtin_exit(char **args, int cmds_size);
 t_env	*new_env(char *env);
