@@ -12,17 +12,6 @@
 
 #include "minishell.h"
 
-int cmds_size(t_cmd *all_cmds)
-{
-	int	i;
-	
-	i = 0;
-	while (all_cmds[i].cmd)
-		i++;
-	return (i);
-}
-
-
 int	argslen(char **args)
 {
 	int	i;
@@ -157,13 +146,16 @@ static int	n_flag(char *str)
 	return (1);
 }
 
-void	builtin_echo(char **args)
+void	builtin_echo(char **args, int current_index, int cmds_size)
 {
 	int	i;
 	int	newline;
 
+
 	i = 1;
 	newline = 1;
+	if (current_index != cmds_size - 1)
+		return ;
 	while (args[i] && n_flag(args[i]) == 1)
 	{
 		newline = 0;
@@ -178,4 +170,6 @@ void	builtin_echo(char **args)
 	}
 	if (newline)
 		printf("\n");
+
+	return ;
 }
