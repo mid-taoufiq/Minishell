@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/04 12:44:02 by ayel-arr          #+#    #+#             */
-/*   Updated: 2024/10/27 13:33:26 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/04/27 17:28:24 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@ char	*ft_strdup(char *src)
 	char	*s;
 
 	i = 0;
+	if (!src)
+		return (NULL);
 	while (src[i] != '\0')
 	{
 		i++;

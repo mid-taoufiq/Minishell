@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   expanding.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/19 15:12:31 by tibarike          #+#    #+#             */
-/*   Updated: 2025/04/27 14:21:23 by tibarike         ###   ########.fr       */
+/*   Updated: 2025/05/03 14:16:05 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,15 @@ static char	*exctract_dollar(char *str, int *i, char *res, t_env *envs)
 	(*i)++;
 	val = NULL;
 	len = 0;
+	if (str[*i] == '?')
+	{
+		val = ft_getenv(envs, "?");
+		var = ft_strjoin(res, val);
+		if (!var)
+			return (perror("malloc"), free(res), free(val), NULL);
+		(free(res), free(val));
+		return (var);
+	}
 	if (ft_isalpha(str[*i]) || str[*i] == '_')
 	{
 		start = *i;
@@ -39,6 +48,7 @@ static char	*exctract_dollar(char *str, int *i, char *res, t_env *envs)
 	var = ft_strjoin(res, val);
 	if (!var)
 		return (perror("malloc"), free(res), free(val), NULL);
+	(free(res), free(val));
 	return (var);
 }
 
@@ -129,7 +139,7 @@ int	expand(t_cmd *all_cmds, int i, int z, t_env *envs)
 		z = 0;
 		while (all_cmds[i].redirection[z].file)
 		{
-			if (ft_strchr(all_cmds[i].redirection[z].file, '$'))
+			if (ft_strchr(all_cmds[i].redirection[z].file, '$') && all_cmds[i].redirection[z].type != 2)
 			{
 				tmp = expand_parse(all_cmds[i].redirection[z].file, envs);
 				if (!tmp)

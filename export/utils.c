@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 10:57:49 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/27 10:19:36 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/03 14:11:04 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,11 +109,27 @@ t_env	*duplicate_env(char **env)
 {
 	int		i;
 	t_env	*head;
+	char	*tmp;
+	char	*tmp2;
 
 	i = 0;
 	head = new_env(NULL);
+	if (!env[0])
+	{
+		tmp = getcwd(NULL, 0);
+		tmp2 = ft_strjoin("PWD=", tmp);
+		free(tmp);
+		push_env(head, new_env(tmp2));
+		free(tmp2);
+		push_env(head, new_env("SHLVL=1"));
+		push_env(head, new_env("_=/usr/bin/env"));
+		push_env(head, new_env("OLDPWD"));
+		push_env(head, new_env("?=0"));
+		return (head);
+	}
 	while (env[i])
 		(push_env(head, new_env(env[i])), i++);
+	push_env(head, new_env("?=0"));
 	return (head);
 }
 

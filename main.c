@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/11 13:30:40 by tibarike          #+#    #+#             */
-/*   Updated: 2025/04/27 10:50:24 by ayel-arr         ###   ########.fr       */
+/*   Created: 2025/05/03 13:21:14 by ayel-arr          #+#    #+#             */
+/*   Updated: 2025/05/03 14:22:45 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,9 +85,9 @@ void	extract_exe_arg_from_cmd(char **cmd, char **dst)
 char	get_redirection_type(char *str)
 {
 	if (!ft_strcmp(str, ">>"))
-		return (free(str), 2);
-	else if (!ft_strcmp(str, "<<"))
 		return (free(str), 3);
+	else if (!ft_strcmp(str, "<<"))
+		return (free(str), 2);
 	else if (!ft_strcmp(str, ">"))
 		return (free(str), 1);
 	else if (!ft_strcmp(str, "<"))
@@ -167,15 +167,20 @@ int main(int argc, char **argv, char **env)
 	char	*line;
 	t_cmd	*all_cmds;
 	t_env	*envs;
+	t_env	*s_env;
+	int		status;
 
 	(void)argc;
 	(void)argv;
+	signal(SIGINT, sigint_handler);
+	signal(SIGQUIT, SIG_IGN);
 	envs = duplicate_env(env);
+	s_env = sort_lst(envs);
 	while (1)
 	{
 		line = readline("minishell> ");
 		if (!line)
-			(free_env(envs), printf("exit"), exit (0));
+			(free_env(envs), free_env(s_env), printf("exit\n"), exit (0));
 		if (line[0] == '\0')
 		{
 			free(line);
@@ -240,24 +245,26 @@ int main(int argc, char **argv, char **env)
 			}
 			extract_exe_arg_from_cmd(cmd, all_cmds[i].cmd);
 			extract_redirections_from_cmd(cmd, all_cmds[i].redirection);
+			all_cmds[i].fd = 0;
 			free(cmd);
 			i++;
 		}
+		freedbl((void **)cmds);
 		all_cmds[i].cmd = NULL;
 		all_cmds[i].redirection = NULL;
 		if (expand(all_cmds, 0, 0, envs))
 		{
-			(freencmds(all_cmds, i), freedbl((void **)cmds));
+			freencmds(all_cmds, i);
 			continue ;
 		}
 		if (remove_quotes_main(all_cmds))
 		{
-			(freencmds(all_cmds, i), freedbl((void **)cmds));
+			freencmds(all_cmds, i);
 			continue ;
 		}
-		execute(all_cmds, envs);
+		status = execute(all_cmds, envs, s_env, env);
+		chexitstatus(status, envs, s_env);
 		freencmds(all_cmds, i);
-		freedbl((void **)cmds);
 	}
 	return (0);
 }

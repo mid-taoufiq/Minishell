@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   built_ins.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 08:37:41 by tibarike          #+#    #+#             */
-/*   Updated: 2025/04/27 16:11:25 by tibarike         ###   ########.fr       */
+/*   Updated: 2025/05/02 14:14:58 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ void	builtin_pwd(void)
 	}
 }
 
-int	builtin_cd(char **args, int cmds_size)
+void	builtin_cd(char **args, int cmds_size, t_env *env, t_env *exprt)
 {
 	char		*old_pwd;
 	char		*path;
@@ -85,46 +85,52 @@ int	builtin_cd(char **args, int cmds_size)
 
 	i = argslen(args);
 	if (i >= 3)
-		return (ft_putstr_fd("too many arguments\n", 2), 1);
+		return (ft_putstr_fd("too many arguments\n", 2));
 	if (i == 1)
 	{
-		path = getenv("HOME");
+		path = ft_strdup(getenv("HOME"));
 		if (!path)
-			return(ft_putstr_fd("cd: HOME is not set\n", 2), 1);
+			return(ft_putstr_fd("cd: HOME is not set\n", 2));
 	}
 	else
 	{
 		if ((old_pwd = getcwd(NULL, 0)) == NULL)
-			return (chdir("/"), 0);
+		{
+			choldpwd(env, exprt, getcwd(NULL, 0));
+			chdir("/");
+			chpwd(env, exprt, getcwd(NULL, 0));
+			return ;
+		}
 		else if (args[1][0] == '/')
 		{
 			path = ft_strdup(args[1]);
 			if (!path)
-				return (free(old_pwd), 1);
+				return (free(old_pwd));
 			free(old_pwd);
 		}
 		else
 		{
 			tmp = ft_strjoin(old_pwd, "/");
 			if (!tmp)
-				return (free(old_pwd), 1);
+				return (free(old_pwd));
 			free(old_pwd);
 			path = ft_strjoin(tmp, args[1]);
 			free(tmp);
 			if (!path)
-				return (1);
+				return ;
 		}
 	}
 	if (stat(path, &info) != 0)
-		return (ft_putstr_fd("cd: No such file or directory\n", 2), 1);
+		return (ft_putstr_fd("cd: No such file or directory\n", 2), free(path));
 	if (!S_ISDIR(info.st_mode))
-		return (ft_putstr_fd("cd: Not a directory\n", 2), 1);
+		return (ft_putstr_fd("cd: Not a directory\n", 2), free(path));
 	if (cmds_size > 1)
-		return (free(path), 1);
+		return free(path);
+	choldpwd(env, exprt, getcwd(NULL, 0));
 	chdir(path);
-	if (i != 1)
-		free(path);
-	return (0);
+	free(path);
+	chpwd(env, exprt, getcwd(NULL, 0));
+	return ;
 }
 
 static int	n_flag(char *str)
@@ -146,7 +152,7 @@ static int	n_flag(char *str)
 	return (1);
 }
 
-void	builtin_echo(char **args, int current_index, int cmds_size)
+void	builtin_echo(char **args)
 {
 	int	i;
 	int	newline;
@@ -154,8 +160,6 @@ void	builtin_echo(char **args, int current_index, int cmds_size)
 
 	i = 1;
 	newline = 1;
-	if (current_index != cmds_size - 1)
-		return ;
 	while (args[i] && n_flag(args[i]) == 1)
 	{
 		newline = 0;

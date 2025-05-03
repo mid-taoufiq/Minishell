@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 10:35:48 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/27 10:13:09 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/03 14:24:58 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ void	display_env(t_env *env)
 	env = env->next;
 	while (env)
 	{
-		if (!env->empty)
+		if (!env->empty || ft_strcmp(env->key, "?"))
 		{
 			printf("%s=%s\n", env->key, env->value);
 		}
@@ -25,7 +25,63 @@ void	display_env(t_env *env)
 	}
 }
 
-void chpwd(t_env *env, char *new)
+void	chexitstatus(int status, t_env *env, t_env *exprt)
+{
+	char	*tmp;
+
+	env = env->next;
+	while (env)
+	{
+		if (!ft_strcmp(env->key, "?"))
+		{
+			tmp = env->value;
+			env->value = ft_itoa(status);
+			free(tmp);
+		}
+		env = env->next;
+	}
+	exprt = exprt->next;
+	while (exprt)
+	{
+		if (!ft_strcmp(exprt->key, "?"))
+		{
+			tmp = exprt->value;
+			exprt->value = ft_itoa(status);
+			free(tmp);
+		}
+		exprt = exprt->next;
+	}
+}
+
+void choldpwd(t_env *env, t_env *exprt, char *new)
+{
+	char	*tmp;
+
+	env = env->next;
+	while (env)
+	{
+		if (!ft_strcmp(env->key, "OLDPWD"))
+		{
+			tmp = env->value;
+			env->value = new;
+			free(tmp);
+		}
+		env = env->next;
+	}
+	exprt = exprt->next;
+	while (exprt)
+	{
+		if (!ft_strcmp(exprt->key, "OLDPWD"))
+		{
+			tmp = exprt->value;
+			exprt->value = ft_strdup(new);
+			free(tmp);
+		}
+		exprt = exprt->next;
+	}
+}
+
+void chpwd(t_env *env, t_env *exprt, char *new)
 {
 	char	*tmp;
 
@@ -40,13 +96,30 @@ void chpwd(t_env *env, char *new)
 		}
 		env = env->next;
 	}
+	exprt = exprt->next;
+	while (exprt)
+	{
+		if (!ft_strcmp(exprt->key, "PWD"))
+		{
+			tmp = exprt->value;
+			exprt->value = ft_strdup(new);
+			free(tmp);
+		}
+		exprt = exprt->next;
+	}
 }
+
 
 static void	display_export(t_env *env)
 {
 	env = env->next;
 	while (env)
 	{
+		if (!ft_strcmp(env->key, "?"))
+		{
+			env = env->next;
+			continue ;
+		}
 		printf("declare -x %s", env->key);
 		if (env->empty == 0)
 			printf("=\"%s\"\n", env->value);
@@ -61,6 +134,8 @@ static void	append_env(t_env *head, t_env *new)
 	t_env	*last;
 	char	*tmp;
 
+	if (!new)
+		return (perror("export error"));
 	while (head)
 	{
 		if (head->key && !ft_strcmp(head->key, new->key))
@@ -68,6 +143,11 @@ static void	append_env(t_env *head, t_env *new)
 			free(new->key);
 			tmp = head->value;
 			head->value = ft_strjoin(head->value, new->value);
+			if (!head->value)
+			{
+				head->value = tmp;
+				return (free(new->value), free(new));
+			}
 			free(tmp);
 			free(new->value);
 			free(new);
@@ -79,14 +159,14 @@ static void	append_env(t_env *head, t_env *new)
 	last->next = new;
 }
 
-int	export(t_env *env, char **cmd)
+int	export(t_env *env, t_env *exprt, char **cmd)
 {
 	int i;
 	int j;
 
 	j = 1;
 	if (ft_dstrlen(cmd) == 1)
-		return (display_export(env), 0);
+		return (display_export(exprt), 0);
 	while (cmd[j])
 	{
 		i = 1;
@@ -96,17 +176,31 @@ int	export(t_env *env, char **cmd)
 			continue ;
 		}
 		if (!isalpha(cmd[j][0]) && cmd[j][0] != '_')
-			return (perror("syntax error"), -1);
+		{
+			perror("syntax error");
+			j++;
+			continue ;
+		}
 		while (cmd[j][i] != '=' && cmd[j][i] != '\0' && cmd[j][i] != '+')
 		{
 			if (!isalnum(cmd[j][i]) && cmd[j][i] != '_')
-				return (perror("syntax error"), -1);
+			{
+				perror("syntax error");
+				j++;
+				continue ;
+			}
 			i++;
 		}
-		if (cmd[j][i] == '=' || cmd[j][i] == '\0') 
+		if (cmd[j][i] == '=' || cmd[j][i] == '\0')
+		{
 			push_env(env, new_env(cmd[j]));
+			push_export(exprt, new_env(cmd[j]));
+		}
 		else if (cmd[j][i] == '+' && cmd[j][i + 1] == '=')
+		{
 			append_env(env, new_env(cmd[j]));
+			append_export(exprt, new_env(cmd[j]));
+		}
 		else
 			perror("syntax error");
 		j++;
