@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   execute.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/24 11:27:21 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/03 14:28:36 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/06 16:41:49 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,19 @@ int	count_cmds(t_cmd *cmds)
 	return (i);
 }
 
+void	close_heredocs(t_cmd *all_cmds)
+{
+	int	i;
+
+	i = 0;
+	while (all_cmds[i].cmd)
+	{
+		if (all_cmds[i].fd)
+			close(all_cmds[i].fd);
+		i++;
+	}
+}
+
 int	here_doc(t_cmd *all_cmds)
 {
 	int	i;
@@ -31,6 +44,7 @@ int	here_doc(t_cmd *all_cmds)
 	red = 0;
 	while (all_cmds[i].cmd)
 	{
+		red = 0;
 		while (all_cmds[i].redirection[red].file != NULL)
 		{
 			if (all_cmds[i].redirection[red].type == 2)
@@ -38,6 +52,8 @@ int	here_doc(t_cmd *all_cmds)
 				if (all_cmds[i].fd != 0)
 					close(all_cmds[i].fd);
 				all_cmds[i].fd = open_heredoc(all_cmds[i].redirection[red].file);
+				if (all_cmds[i].fd == -1)
+					return (-1);
 			}
 			red++;
 		}
@@ -46,80 +62,118 @@ int	here_doc(t_cmd *all_cmds)
 	return (0);
 }
 
-int	execute(t_cmd *all_cmds, t_env *env, t_env *exprt, char **o_env)
+int	execute(t_cmd *all_cmds, t_env *env, t_env *exprt)
 {
 	int		i;
-	char	*cmd_path;
 	int		no_cmds;
 	int		p_fd[3];
 	int		status;
+	int		tmp;
+	pid_t	pid;
 
 	i = 0;
 	status = 0;
+	p_fd[2] = 0;
 	no_cmds = count_cmds(all_cmds);
 	if (no_cmds != 1)
 		pipe(p_fd);
-	here_doc(all_cmds);
+	if (here_doc(all_cmds) == -1)
+		return (close(p_fd[0]), close(p_fd[1]), -1);
 	while (all_cmds[i].cmd)
 	{
-		if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "export"))
-			export(env, exprt, all_cmds[i].cmd);
-		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "echo"))
-			builtin_echo(all_cmds[i].cmd);
-		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "cd"))
-			builtin_cd(all_cmds[i].cmd, no_cmds, env, exprt);
-		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "pwd"))
-			builtin_pwd();
-		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "exit"))
-			builtin_exit(all_cmds[i].cmd, no_cmds);
-		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "unset"))
-			unset(all_cmds[i].cmd, env);
-		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "env"))
-			display_env(env);
-		else
+		if (i != 0 && i != no_cmds -1)
 		{
-			if (all_cmds[i].fd == -1)
+			close(p_fd[1]);
+			if (p_fd[2])
+				close(p_fd[2]);
+			p_fd[2] = p_fd[0];
+			pipe(p_fd);
+		}
+		else if (i == no_cmds - 1 && no_cmds != 1)
+			close(p_fd[1]);
+		if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "export"))
+		{
+			if (no_cmds != 1)
+			{
+				if (!fork())
+				{
+					if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+					{
+						(freencmds(all_cmds, no_cmds), free_env(env), free_env(exprt));
+						exit(1);
+					}
+					export(env, exprt, all_cmds[i].cmd);
+					(close(p_fd[0]), close(p_fd[1]));
+					exit(0);
+				}
+				i++;
+				continue ;
+			}
+			tmp = dup(1);
+			if (all_cmds[i].fd)
+			{
+				close(all_cmds[i].fd);
+				all_cmds[i].fd = 0;
+			}
+			if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+			{
+				close(tmp);
+				i++;
+				continue ;
+			}
+			export(env, exprt, all_cmds[i].cmd);
+			dup2(tmp, 1);
+			close(tmp);
+		}
+		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "echo"))
+			status = execute_echo(all_cmds, i, no_cmds, p_fd);
+		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "cd"))
+		{
+			tmp = dup(1);
+			if (all_cmds[i].fd)
+			{
+				close(all_cmds[i].fd);
+				all_cmds[i].fd = 0;
+			}
+			if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
 			{
 				i++;
 				continue ;
 			}
-			if (i != 0 && i != no_cmds -1)
-			{
-				close(p_fd[1]);
-				p_fd[2] = p_fd[0];
-				pipe(p_fd);
-			}
-			else if (i == no_cmds - 1 && no_cmds != 1)
-				close(p_fd[1]);
-			if (!fork())
+			builtin_cd(all_cmds[i].cmd, no_cmds, env, exprt);
+			(dup2(tmp, 1), close(tmp));
+		}
+		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "pwd"))
+			status = execute_pwd(all_cmds, i, no_cmds, p_fd);
+		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "exit"))
+			status = execute_exit(all_cmds, i, no_cmds, p_fd);
+		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "unset"))
+			status = execute_unset(all_cmds, i, env, p_fd);
+		else if (all_cmds[i].cmd[0] && !ft_strcmp(all_cmds[i].cmd[0], "env"))
+			status = execute_env(all_cmds, i, env, p_fd);
+		else
+		{
+			pid = fork();
+			if (!pid)
 			{
 				if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
-				{
-					(freencmds(all_cmds, no_cmds), free_env(env), free_env(exprt));
-					exit(1);
-				}
-				if (!all_cmds[i].cmd[0])
-				{
-					(freencmds(all_cmds, no_cmds), free_env(env), free_env(exprt));
-					exit(1);
-				}
-				cmd_path = check_commands(env, all_cmds[i].cmd[0]);
-				if (!cmd_path)
-				{
-					(freencmds(all_cmds, no_cmds), free_env(env), free_env(exprt));
-					exit(1);
-				}
-				execve(cmd_path, all_cmds[i].cmd, o_env);
-				perror("execve");
-				(freencmds(all_cmds, no_cmds), free_env(env), free_env(exprt));
-				exit(1);
+					(freencmds(all_cmds, no_cmds), free_env(env), free_env(exprt), exit(1));
+				execute_others(all_cmds[i], all_cmds, env, exprt);
 			}
+			if (p_fd[2])
+				(close(p_fd[2]), p_fd[2] = 0);
+			if (WIFSIGNALED(status))
+				return(g_herdoc_signal = 0, -1);
+			g_herdoc_signal = 0;
 		}
 		i++;
 	}
+	close_heredocs(all_cmds);
 	if (no_cmds != 1)
 		(close(p_fd[0]), close(p_fd[1]));
+	if (p_fd[2])
+		close(p_fd[2]);
 	while (wait(&status) >= 0)
 		continue ;
-	return (status % 255);
+	return (WEXITSTATUS(status));
 }

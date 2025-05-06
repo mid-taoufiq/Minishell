@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/19 15:12:31 by tibarike          #+#    #+#             */
-/*   Updated: 2025/05/03 14:16:05 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/04 16:46:22 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ static char	*exctract_dollar(char *str, int *i, char *res, t_env *envs)
 		if (!var)
 			return (perror("malloc"), free(res), free(val), NULL);
 		(free(res), free(val));
+		(*i)++;
 		return (var);
 	}
 	if (ft_isalpha(str[*i]) || str[*i] == '_')

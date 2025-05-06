@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   open_redirections.c                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 13:21:50 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/03 14:06:50 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/06 12:32:39 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+int	g_herdoc_signal = 0;
 
 int	open_infile(char	*filename)
 {
@@ -26,7 +28,7 @@ int open_outfile(char *filename)
 {
 	int	fd;
 
-	fd = open(filename, O_WRONLY | O_CREAT, 0777);
+	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777);
 	if (fd == -1)
 		return (perror("open"), -1);
 	dup2(fd, 1);
@@ -38,7 +40,7 @@ int	open_append_file(char *filename)
 {
 	int	fd;
 
-	fd = open(filename, O_WRONLY | O_APPEND | O_CREAT);
+	fd = open(filename, O_WRONLY | O_APPEND | O_CREAT, 0777);
 	if (fd == -1)
 		return (perror("open"), -1);
 	dup2(fd, 1);
@@ -46,20 +48,38 @@ int	open_append_file(char *filename)
 	return (0);
 }
 
-int	write_in_file(int fd, char *lim)
+int	write_in_file(int fd[2], char *lim)
 {
 	char	*line;
+	int		status;
+	pid_t	pid;
 
-	line = readline("heredoc> ");
-	while (line && ft_strcmp(line, lim))
+	g_herdoc_signal = 1;
+	pid = fork();
+	if (!pid)
 	{
-		write(fd, line, ft_strlen(line));
-		write(fd, "\n", 1);
-		free(line);
+		close(fd[1]);
+		dup2(fd[0], 2);
+		close(fd[0]);
+		signal(SIGINT, child_sigint);
+		signal(SIGQUIT, SIG_IGN);
 		line = readline("heredoc> ");
+		while (line && ft_strcmp(line, lim))
+		{
+			write(2, line, ft_strlen(line));
+			write(2, "\n", 1);
+			free(line);
+			line = readline("heredoc> ");
+		}
+		free(line);
+		close(fd[0]);
+		exit(0);
 	}
-	free(line);
-	return (fd);
+	waitpid(pid, &status, 0);
+	if (WEXITSTATUS(status) == -1)
+		return (g_herdoc_signal = 0, -1);
+	g_herdoc_signal = 0;
+	return (fd[0]);
 }
 
 int	open_heredoc(char *lim)
@@ -89,7 +109,13 @@ int	open_heredoc(char *lim)
 	if (fd[1] == -1)
 		return (perror("heredoc"), free(filename), free(num), -1);
 	unlink(filename);
-	write_in_file(fd[0], lim);
+	if (write_in_file(fd, lim) == -1)
+	{
+		close(fd[1]);
+		close(fd[0]);
+		(free(filename), free(num));
+		return (-1);
+	}
 	close(fd[0]);
 	(free(filename), free(num));
 	return (fd[1]);
@@ -103,14 +129,16 @@ int	redirect(t_cmd all_cmds, int pfd[2], int nth, int no_cmds)
 	red = 0;
 	fd0 = all_cmds.fd;
 	if (nth == 0 && no_cmds != 1)
-		(dup2(pfd[1], 1), close(pfd[1]));
-	else if (nth == no_cmds - 1 && no_cmds != 1)
+		(dup2(pfd[1], 1), close(pfd[1]), close(pfd[0]));
+	else if (nth == no_cmds - 1 && no_cmds != 1 && fd0 == 0)
 		fd0 = pfd[0];
-	else if (no_cmds != 1)
+	else if (no_cmds != 1 && nth != no_cmds - 1)
 	{
 		dup2(pfd[1], 1);
 		close(pfd[1]);
-		fd0 = pfd[2];
+		close(pfd[0]);
+		if (fd0 == 0)
+			fd0 = pfd[2];
 	}
 	while (all_cmds.redirection[red].file != NULL)
 	{

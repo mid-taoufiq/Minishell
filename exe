@@ -1,3 +1,3 @@
 #!/bin/zsh
 make
-valgrind -s --leak-check=full ./minishell
+valgrind -s --trace-children=yes --track-fds=yes --leak-check=full ./minishell

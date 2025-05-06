@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 08:37:41 by tibarike          #+#    #+#             */
-/*   Updated: 2025/05/02 14:14:58 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/06 12:11:31 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ void	builtin_exit(char **args, int cmds_size)
 	long	exit_value;
 	int		success;
 
+	fprintf(stderr, "%i\n", cmds_size);
 	exit_value = 0;
 	success = 1;
 	j = 0;
@@ -88,20 +89,20 @@ void	builtin_cd(char **args, int cmds_size, t_env *env, t_env *exprt)
 		return (ft_putstr_fd("too many arguments\n", 2));
 	if (i == 1)
 	{
-		path = ft_strdup(getenv("HOME"));
+		path = ft_getenv(env, "HOME");
 		if (!path)
 			return(ft_putstr_fd("cd: HOME is not set\n", 2));
 	}
 	else
 	{
-		if ((old_pwd = getcwd(NULL, 0)) == NULL)
+		if ((old_pwd = getcwd(NULL, 0)) == NULL && cmds_size == 1)
 		{
 			choldpwd(env, exprt, getcwd(NULL, 0));
 			chdir("/");
 			chpwd(env, exprt, getcwd(NULL, 0));
 			return ;
 		}
-		else if (args[1][0] == '/')
+		if (args[1][0] == '/')
 		{
 			path = ft_strdup(args[1]);
 			if (!path)
@@ -125,7 +126,7 @@ void	builtin_cd(char **args, int cmds_size, t_env *env, t_env *exprt)
 	if (!S_ISDIR(info.st_mode))
 		return (ft_putstr_fd("cd: Not a directory\n", 2), free(path));
 	if (cmds_size > 1)
-		return free(path);
+		return (free(path));
 	choldpwd(env, exprt, getcwd(NULL, 0));
 	chdir(path);
 	free(path);

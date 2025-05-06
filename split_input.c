@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/14 14:02:31 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/30 09:13:01 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/03 19:53:56 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,6 +70,8 @@ int	wordcount(char *s)
 	count = 0;
 	while (s[i])
 	{
+		if (is_whitespace(s[i]) && q == 0)
+			f = 1;
 		if (s[i] == '\'' && q == 0)
 			q = 1;
 		else if (s[i] == '\'' && q == 1)
@@ -78,9 +80,7 @@ int	wordcount(char *s)
 			q = 2;
 		else if (s[i] == '\"' && q == 2)
 			q = 0;
-		else if (is_whitespace(s[i]) && !is_whitespace(s[i + 1]) && q == 0)
-			f = 1;
-		else if (f == 1 && !is_whitespace(s[i]))
+		if (f == 1 && !is_whitespace(s[i]))
 		{
 			count++;
 			f = 0;

@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/26 14:10:49 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/26 14:24:23 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/05 12:13:53 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,11 @@ int	unset(char **cmd, t_env *env)
 	i = 1;
 	while (cmd[i])
 	{
+		if (!ft_strcmp(cmd[i], "?"))
+		{
+			i++;
+			continue ;
+		}
 		remove_variable(env, cmd[i]);
 		i++;
 	}

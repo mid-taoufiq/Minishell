@@ -6,13 +6,11 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 13:21:14 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/03 14:22:45 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/06 12:17:29 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
-
-int g_prompt_statue = PROMPT;
+#include "minishell.h"	
 
 int	ft_dstrlen(char **str)
 {
@@ -172,10 +170,10 @@ int main(int argc, char **argv, char **env)
 
 	(void)argc;
 	(void)argv;
-	signal(SIGINT, sigint_handler);
-	signal(SIGQUIT, SIG_IGN);
 	envs = duplicate_env(env);
 	s_env = sort_lst(envs);
+	signal(SIGINT, sigint_handler);
+	signal(SIGQUIT, SIG_IGN);
 	while (1)
 	{
 		line = readline("minishell> ");
@@ -262,7 +260,7 @@ int main(int argc, char **argv, char **env)
 			freencmds(all_cmds, i);
 			continue ;
 		}
-		status = execute(all_cmds, envs, s_env, env);
+		status = execute(all_cmds, envs, s_env);
 		chexitstatus(status, envs, s_env);
 		freencmds(all_cmds, i);
 	}

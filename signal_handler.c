@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   signals_handler.c                                  :+:      :+:    :+:   */
+/*   signal_handler.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/22 08:37:26 by tibarike          #+#    #+#             */
-/*   Updated: 2025/05/03 13:23:48 by ayel-arr         ###   ########.fr       */
+/*   Created: 2025/05/05 12:51:37 by tibarike          #+#    #+#             */
+/*   Updated: 2025/05/06 16:39:09 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,17 +14,27 @@
 
 void	sigint_handler(int sig)
 {
-	if (g_prompt_statue == PROMPT)
+	(void)sig;
+	if (g_herdoc_signal == 0)
 	{
-		(void)sig;
 		printf("\n");
+		printf("0000");
 		rl_replace_line("", 0);
 		rl_on_new_line();
 		rl_redisplay();
 	}
-	else if (g_prompt_statue == HERDOC)
- 	{
- 		printf("\n");
- 		exit(130);
- 	}
+	if (g_herdoc_signal == 2)
+	{
+		close(0);
+		dup2(2, 0);
+		printf("\n");
+		printf("2222");
+	}
+}
+
+void	child_sigint(int sig)
+{
+	(void) sig;
+	printf("\n");
+	exit(130);
 }
