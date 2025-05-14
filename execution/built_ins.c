@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   built_ins.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/22 08:37:41 by tibarike          #+#    #+#             */
-/*   Updated: 2025/05/06 12:11:31 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/12 14:39:19 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,14 +21,14 @@ int	argslen(char **args)
 		i++;
 	return (i);
 }
-void	builtin_exit(char **args, int cmds_size)
+
+int	builtin_exit(char **args, int cmds_size)
 {
 	int		i;
 	int		j;
 	long	exit_value;
 	int		success;
 
-	fprintf(stderr, "%i\n", cmds_size);
 	exit_value = 0;
 	success = 1;
 	j = 0;
@@ -44,23 +44,25 @@ void	builtin_exit(char **args, int cmds_size)
 				ft_putstr_fd("exit: numeric argument required\n", 2);
 				if (cmds_size == 1)
 					exit(2);
-				return ;
+				return (2);
 			}
 			j++;
 		}
 	}
 	if (i > 2)
-		return (ft_putstr_fd("exit: too many arguments\n", 2));
+		return (ft_putstr_fd("exit: too many arguments\n", 2), 1);
 	exit_value = ft_atol(args[1], &success);
 	if (success == 0)
 	{
 		if (cmds_size > 1)
-			return(ft_putstr_fd("exit: numeric argument required\n", 2));
+			return(ft_putstr_fd("exit: numeric argument required\n", 2), 2);
 		else
 			(ft_putstr_fd("exit: numeric argument required\n", 2), exit(2));
 	}
 	if (cmds_size > 1)
-		return ;
+		return (0);
+	if (i == 1)
+		exit_value = get_status(NULL, 1);
 	exit(exit_value % 256);
 }
 
@@ -68,70 +70,87 @@ void	builtin_pwd(void)
 {
 	char	*path;
 	
-	path = getcwd(NULL, 0);
+	path = get_pwd(1);
 	if (path)
-	{
 		printf("%s\n", path);
-		free(path);	
-	}
 }
 
-void	builtin_cd(char **args, int cmds_size, t_env *env, t_env *exprt)
+int	init_oldpwd(char **old_pwd, int cmds_size, t_env *env, t_env *exprt)
 {
-	char		*old_pwd;
-	char		*path;
-	char		*tmp;
-	int			i;
+	*old_pwd = getcwd(NULL, 0);
+	if (*old_pwd == NULL && cmds_size == 1)
+	{
+		choldpwd(env, exprt, getcwd(NULL, 0));
+		chdir("/");
+		chpwd(env, exprt, getcwd(NULL, 0));
+		return (0);
+	}
+	return (1);
+}
+
+int		is_absolute(char **args, char **path, char *old_pwd)
+{
+	char	*tmp;
+
+	if (args[1][0] == '/')
+	{
+		free(old_pwd);
+		*path =  ft_strdup(args[1]);
+		if (!*path)
+			return (1);
+		return (0);
+	}
+	tmp = ft_strjoin(old_pwd, "/");
+	if (!tmp)
+		return (free(old_pwd), 1);
+	free(old_pwd);
+	*path = ft_strjoin(tmp, args[1]);
+	free(tmp);
+	if (!*path)
+		return (1);
+	return (0);
+}
+
+int	change_directory(char *path, int cmds_size, t_env *env, t_env *exprt)
+{
 	struct stat	info;
 
-	i = argslen(args);
-	if (i >= 3)
-		return (ft_putstr_fd("too many arguments\n", 2));
-	if (i == 1)
-	{
-		path = ft_getenv(env, "HOME");
-		if (!path)
-			return(ft_putstr_fd("cd: HOME is not set\n", 2));
-	}
-	else
-	{
-		if ((old_pwd = getcwd(NULL, 0)) == NULL && cmds_size == 1)
-		{
-			choldpwd(env, exprt, getcwd(NULL, 0));
-			chdir("/");
-			chpwd(env, exprt, getcwd(NULL, 0));
-			return ;
-		}
-		if (args[1][0] == '/')
-		{
-			path = ft_strdup(args[1]);
-			if (!path)
-				return (free(old_pwd));
-			free(old_pwd);
-		}
-		else
-		{
-			tmp = ft_strjoin(old_pwd, "/");
-			if (!tmp)
-				return (free(old_pwd));
-			free(old_pwd);
-			path = ft_strjoin(tmp, args[1]);
-			free(tmp);
-			if (!path)
-				return ;
-		}
-	}
 	if (stat(path, &info) != 0)
-		return (ft_putstr_fd("cd: No such file or directory\n", 2), free(path));
+		return (ft_putstr_fd("cd: No such file or directory\n", 2), free(path), 1);
 	if (!S_ISDIR(info.st_mode))
-		return (ft_putstr_fd("cd: Not a directory\n", 2), free(path));
+		return (ft_putstr_fd("cd: Not a directory\n", 2), free(path), 1);
 	if (cmds_size > 1)
-		return (free(path));
+		return (free(path), 0);
 	choldpwd(env, exprt, getcwd(NULL, 0));
 	chdir(path);
 	free(path);
 	chpwd(env, exprt, getcwd(NULL, 0));
-	return ;
+	return (0);
+}
+
+int	builtin_cd(char **args, int cmds_size, t_env *env, t_env *exprt)
+{
+	char		*old_pwd;
+	char		*path;
+
+	if (args[2])
+		return (ft_putstr_fd("cd: too many arguments\n", 2), 1);
+	if (!args[1])
+	{
+		path = ft_getenv(env, "HOME");
+		if (!path)
+			return (ft_putstr_fd("cd: HOME is not set\n", 2), 1);
+	}
+	else
+	{
+		if (init_oldpwd(&old_pwd, cmds_size, env, exprt) == 0)
+			return (0);
+		if (is_absolute(args, &path, old_pwd) != 0)
+			return (1);
+		}
+	if (change_directory(path, cmds_size, env, exprt) != 0)
+		return (1);
+	return (0);
 }
 
 static int	n_flag(char *str)

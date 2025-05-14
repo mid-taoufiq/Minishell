@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 13:21:14 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/06 12:17:29 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/12 16:01:10 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"	
+
+int	g_herdoc_signal = 0;
 
 int	ft_dstrlen(char **str)
 {
@@ -106,6 +108,13 @@ void	extract_redirections_from_cmd(char **cmd, t_redr *redirections)
 		{
 			redirections[counter].file = cmd[i + 1];
 			redirections[counter].type = get_redirection_type(cmd[i]);
+			redirections[counter].expandable = 0;
+			redirections[counter].error = 0;
+			if (redirections[counter].type == 2)
+			{
+				if (!ft_strchr(redirections[counter].file, '\'') && !ft_strchr(redirections[counter].file, '\"'))
+					redirections[counter].expandable = 1;
+			}
 			counter++;
 			i++;
 		}
@@ -155,6 +164,23 @@ void	freencmds(t_cmd	*all_cmds, int n)
 	free(all_cmds);
 }
 
+int	get_status(t_env *env, int option)
+{
+	static t_env	*envv;
+	char			*tmp;
+	int				ret;
+
+	if (option == 0)
+		envv = env;
+	else if (option == 1)
+	{
+		tmp = ft_getenv(envv, "?");
+		ret = (int)ft_atol(tmp, &ret);
+		free(tmp);
+		return (ret);
+	}
+	return (0);
+}
 
 int main(int argc, char **argv, char **env)
 {
@@ -170,15 +196,20 @@ int main(int argc, char **argv, char **env)
 
 	(void)argc;
 	(void)argv;
+	if (!isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO))
+		exit(1);
 	envs = duplicate_env(env);
 	s_env = sort_lst(envs);
+	status = 0;
 	signal(SIGINT, sigint_handler);
 	signal(SIGQUIT, SIG_IGN);
+	get_pwd(0);
+	get_status(envs, 0);
 	while (1)
 	{
 		line = readline("minishell> ");
 		if (!line)
-			(free_env(envs), free_env(s_env), printf("exit\n"), exit (0));
+			(free_env(envs), free_env(s_env), printf("exit\n"), get_pwd(2), exit(status));
 		if (line[0] == '\0')
 		{
 			free(line);
@@ -260,7 +291,9 @@ int main(int argc, char **argv, char **env)
 			freencmds(all_cmds, i);
 			continue ;
 		}
+		
 		status = execute(all_cmds, envs, s_env);
+		g_herdoc_signal = 0;
 		chexitstatus(status, envs, s_env);
 		freencmds(all_cmds, i);
 	}

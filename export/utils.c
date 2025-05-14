@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 10:57:49 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/03 14:11:04 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/11 17:54:07 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,36 @@ void	free_env(t_env *env)
 	}
 }
 
+void	update_shlvl(t_env *env)
+{
+	char	*val;
+	int		num;
+	int		ss;
+
+	val = ft_getenv(env, "SHLVL");
+	num = (int)ft_atol(val, &ss);
+	num++;
+	free(val);
+	val = ft_itoa(num);
+	env = env->next;
+	while (env)
+	{
+		if (!ft_strcmp(env->key, "SHLVL"))
+		{
+			if (!ft_strcmp(env->value, "999"))
+			{
+				ft_putstr_fd("warning: shell level (1000) too high, resetting to 1\n", 2);
+				(free(env->value), free(val), env->value = ft_strdup("1"));
+				return ;
+			}
+			free(env->value);
+			env->value = val;
+			return ;
+		}
+		env = env->next;
+	}
+}
+
 t_env	*duplicate_env(char **env)
 {
 	int		i;
@@ -116,6 +146,7 @@ t_env	*duplicate_env(char **env)
 	head = new_env(NULL);
 	if (!env[0])
 	{
+		head->i = 1;
 		tmp = getcwd(NULL, 0);
 		tmp2 = ft_strjoin("PWD=", tmp);
 		free(tmp);
@@ -127,8 +158,13 @@ t_env	*duplicate_env(char **env)
 		push_env(head, new_env("?=0"));
 		return (head);
 	}
+	head->i = 0;
 	while (env[i])
 		(push_env(head, new_env(env[i])), i++);
+	if (!(tmp = ft_getenv(head, "PATH")))
+		head->i = 1;
+	free(tmp);
+	update_shlvl(head);
 	push_env(head, new_env("?=0"));
 	return (head);
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   quotes_remover.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/26 11:20:40 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/27 10:58:00 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/12 16:13:26 by tibarike         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,6 +115,20 @@ static int is_there_quote(char *s)
 	}
 	return (0);
 }
+static void replace_expand_quotes1(char *s)
+{
+	int		i;
+
+	i = 0;
+	while (s[i])
+	{
+		if (s[i] == 1)
+			s[i] = '\'';
+		if (s[i] == 2)
+			s[i] = '"';
+		i++;
+	}
+}
 
 int	remove_quotes_main(t_cmd *cmds)
 {
@@ -132,6 +146,7 @@ int	remove_quotes_main(t_cmd *cmds)
 				if (remove_quotes(cmds[c].cmd, cmds[c].cmd[str], str))
 					return (1);
 			}
+			replace_expand_quotes1(cmds[c].cmd[str]);
 			str++;
 		}
 		str = 0;
@@ -142,6 +157,7 @@ int	remove_quotes_main(t_cmd *cmds)
 				if (remove_quotes(&(cmds[c].redirection[str].file), cmds[c].redirection[str].file, 0))
 					return (1);
 			}
+			replace_expand_quotes1(cmds[c].redirection[str].file);
 			str++;
 		}
 		c++;

@@ -3,31 +3,51 @@
 /*                                                        :::      ::::::::   */
 /*   open_redirections.c                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/03 13:21:50 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/06 12:32:39 by tibarike         ###   ########.fr       */
+/*   Updated: 2025/05/12 10:51:32 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	g_herdoc_signal = 0;
+int	space_separated(char *str)
+{
+	int	i;
+	int	f;
 
-int	open_infile(char	*filename)
+	i = 0;
+	f = 0;
+	while (str[i])
+	{
+		if (!is_whitespace(str[i]))
+			f = 1;
+		else if (is_whitespace(str[i]) && !is_whitespace(str[i + 1]) && f == 1)
+			return (1);
+		i++;
+	}
+	return (0);
+}
+
+int	open_infile(char	*filename, char error)
 {
 	int	fd;
 
+	if (error)
+		return (perror("ambiguous redirect"), -1);
 	fd = open(filename, O_RDONLY);
 	if (fd == -1)
 		return (perror("open"), -1);
 	return (fd);
 }
 
-int open_outfile(char *filename)
+int open_outfile(char *filename, char error)
 {
 	int	fd;
 
+	if (error)
+		return (perror("ambiguous redirect"), -1);
 	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0777);
 	if (fd == -1)
 		return (perror("open"), -1);
@@ -36,10 +56,12 @@ int open_outfile(char *filename)
 	return (0);
 }
 
-int	open_append_file(char *filename)
+int	open_append_file(char *filename, char error)
 {
 	int	fd;
 
+	if (error)
+		return (perror("ambiguous redirect"), -1);
 	fd = open(filename, O_WRONLY | O_APPEND | O_CREAT, 0777);
 	if (fd == -1)
 		return (perror("open"), -1);
@@ -48,43 +70,57 @@ int	open_append_file(char *filename)
 	return (0);
 }
 
-int	write_in_file(int fd[2], char *lim)
+int	write_in_file(int args[4], char *lim, int p_fd[3], t_env *env)
 {
 	char	*line;
 	int		status;
 	pid_t	pid;
+	char	*tmp;
 
 	g_herdoc_signal = 1;
 	pid = fork();
 	if (!pid)
 	{
-		close(fd[1]);
-		dup2(fd[0], 2);
-		close(fd[0]);
+		if (args[2] > 1)
+			(close(p_fd[0]), close(p_fd[1]));
+		if (p_fd[2])
+			close(p_fd[2]);
+		close(args[1]);
+		dup2(args[0], 2);
+		close(args[0]);
 		signal(SIGINT, child_sigint);
 		signal(SIGQUIT, SIG_IGN);
 		line = readline("heredoc> ");
 		while (line && ft_strcmp(line, lim))
 		{
+			if (args[3])
+			{
+				tmp = line;
+				if (!(line = expand_parse_heredoc(line, env)))
+					(free(tmp), close(args[0]), exit(1));
+				free(tmp);
+			}
 			write(2, line, ft_strlen(line));
 			write(2, "\n", 1);
 			free(line);
 			line = readline("heredoc> ");
 		}
 		free(line);
-		close(fd[0]);
+		close(args[0]);
 		exit(0);
 	}
 	waitpid(pid, &status, 0);
-	if (WEXITSTATUS(status) == -1)
+	if (WEXITSTATUS(status) == 130)
 		return (g_herdoc_signal = 0, -1);
+	else if (WEXITSTATUS(status) == 1)
+		return (g_herdoc_signal = 0, -2);
 	g_herdoc_signal = 0;
-	return (fd[0]);
+	return (args[0]);
 }
 
-int	open_heredoc(char *lim)
+int	open_heredoc(char *lim, int p_fd[3], int args[2], t_env *env)
 {
-	int		fd[2];
+	int		fd[4];
 	char	*filename_template;
 	int		n;
 	char	*filename;
@@ -92,29 +128,33 @@ int	open_heredoc(char *lim)
 
 	filename_template = "/tmp/.tmp_minishell_";
 	n = 0;
-	num = ft_itoa(n);
-	filename = ft_strjoin(filename_template, num);
+	if (!(num = ft_itoa(n)))
+		return (-2);
+	if (!(filename = ft_strjoin(filename_template, num)))
+		return (free(num), -2);
 	fd[0] = open(filename, O_RDWR | O_CREAT | O_EXCL , 0777);
 	while (fd[0] == -1)
 	{
 		(free(filename), free(num));
 		n++;
-		num = ft_itoa(n);
-		filename = ft_strjoin(filename_template, num);
-		if (!filename)
-			return (free(num), -1);
+		if (!(num = ft_itoa(n)))
+			return (-2);
+		if (!(filename = ft_strjoin(filename_template, num)))
+			return (free(num), -2);
 		fd[0] = open(filename, O_RDWR | O_CREAT | O_EXCL, 0777);
 	}
 	fd[1] = open(filename, O_RDONLY);
 	if (fd[1] == -1)
 		return (perror("heredoc"), free(filename), free(num), -1);
 	unlink(filename);
-	if (write_in_file(fd, lim) == -1)
+	fd[2] = args[0];
+	fd[3] = args[1];
+	if ((n = write_in_file(fd, lim, p_fd, env)) < 0)
 	{
 		close(fd[1]);
 		close(fd[0]);
 		(free(filename), free(num));
-		return (-1);
+		return (n);
 	}
 	close(fd[0]);
 	(free(filename), free(num));
@@ -146,18 +186,18 @@ int	redirect(t_cmd all_cmds, int pfd[2], int nth, int no_cmds)
 		{
 			if (fd0 != 0 && fd0 != -1)
 				close(fd0);
-			fd0 = open_infile(all_cmds.redirection[red].file);
+			fd0 = open_infile(all_cmds.redirection[red].file, all_cmds.redirection[red].error);
 			if (fd0 == -1)
 				return (-1);
 		}
 		else if (all_cmds.redirection[red].type == 1)
 		{	
-			if (open_outfile(all_cmds.redirection[red].file) == -1)
+			if (open_outfile(all_cmds.redirection[red].file, all_cmds.redirection[red].error) == -1)
 				return (-1);
 		}
 		else if (all_cmds.redirection[red].type == 3)
 		{
-			if (open_append_file(all_cmds.redirection[red].file) == -1)
+			if (open_append_file(all_cmds.redirection[red].file, all_cmds.redirection[red].error) == -1)
 				return (-1);
 		}
 		red++;

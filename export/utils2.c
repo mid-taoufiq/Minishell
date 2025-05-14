@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/27 21:18:46 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/28 11:42:22 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/10 08:53:01 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,4 +77,21 @@ void	append_export(t_env *env, t_env *new)
 		env = env->next;
 	}
 	last->next = new;
+}
+
+char	*get_pwd(char option)
+{
+	static char	*pwd;
+
+	if (option == 0)
+	{
+		free(pwd);
+		pwd = getcwd(NULL, 0);
+		return (pwd);
+	}
+	if (option == 1)
+		return (pwd);
+	if (option == 2)
+		return (free(pwd), NULL);
+	return (pwd);
 }

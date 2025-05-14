@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 10:35:48 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/03 14:24:58 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/12 10:16:59 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ void	display_env(t_env *env)
 	env = env->next;
 	while (env)
 	{
-		if (!env->empty || ft_strcmp(env->key, "?"))
+		if (!env->empty && ft_strcmp(env->key, "?"))
 		{
 			printf("%s=%s\n", env->key, env->value);
 		}
@@ -36,6 +36,7 @@ void	chexitstatus(int status, t_env *env, t_env *exprt)
 		{
 			tmp = env->value;
 			env->value = ft_itoa(status);
+			env->empty = 0;
 			free(tmp);
 		}
 		env = env->next;
@@ -47,6 +48,7 @@ void	chexitstatus(int status, t_env *env, t_env *exprt)
 		{
 			tmp = exprt->value;
 			exprt->value = ft_itoa(status);
+			exprt->empty = 0;
 			free(tmp);
 		}
 		exprt = exprt->next;
@@ -64,7 +66,9 @@ void choldpwd(t_env *env, t_env *exprt, char *new)
 		{
 			tmp = env->value;
 			env->value = new;
+			env->empty = 0;
 			free(tmp);
+			break ;
 		}
 		env = env->next;
 	}
@@ -75,7 +79,9 @@ void choldpwd(t_env *env, t_env *exprt, char *new)
 		{
 			tmp = exprt->value;
 			exprt->value = ft_strdup(new);
+			exprt->empty = 0;
 			free(tmp);
+			break ;
 		}
 		exprt = exprt->next;
 	}
@@ -93,6 +99,7 @@ void chpwd(t_env *env, t_env *exprt, char *new)
 			tmp = env->value;
 			env->value = new;
 			free(tmp);
+			break ;
 		}
 		env = env->next;
 	}
@@ -104,6 +111,7 @@ void chpwd(t_env *env, t_env *exprt, char *new)
 			tmp = exprt->value;
 			exprt->value = ft_strdup(new);
 			free(tmp);
+			break ;
 		}
 		exprt = exprt->next;
 	}
@@ -191,7 +199,13 @@ int	export(t_env *env, t_env *exprt, char **cmd)
 			}
 			i++;
 		}
-		if (cmd[j][i] == '=' || cmd[j][i] == '\0')
+		if (!ft_strcmp(cmd[j], "PATH") && env->i)
+		{
+			push_env(env, new_env("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"));
+			push_export(exprt, new_env("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"));
+			env->i = 0;
+		}
+		else if (cmd[j][i] == '=' || cmd[j][i] == '\0')
 		{
 			push_env(env, new_env(cmd[j]));
 			push_export(exprt, new_env(cmd[j]));

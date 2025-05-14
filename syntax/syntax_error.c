@@ -6,13 +6,11 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/13 15:29:19 by tibarike          #+#    #+#             */
-/*   Updated: 2025/04/21 16:00:18 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/09 13:47:48 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-int	check_empty_string(char *s);
 
 static	void	skip(char quote, int *i, char *str)
 {
@@ -38,9 +36,9 @@ static bool	check_redirections(char *str, int i, int count, char redire)
 			count = 1;
 			while (str[i++] == redire)
 				count++;
-			while (is_whitespace(str[i]))
+			while (is_whitespace(str[i]) && str[i])
 				i++;
-			if (count > 2 || str[i] == '|' || str[i] == '>' || str[i] == '<')
+			if (count > 2 || str[i] == '|' || str[i] == '>' || str[i] == '<' || !str[i])
 				return (false);
 		}
 		else

@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/26 14:10:49 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/05 12:13:53 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/09 14:07:55 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@ void	remove_variable(t_env *env, char *key)
 	t_env *last;
 	t_env *tmp;
 
+	if (!ft_strcmp(key, "PATH"))
+		env->i = 0;
 	last = env;
 	env = env->next;
 	while (env)
@@ -35,7 +37,7 @@ void	remove_variable(t_env *env, char *key)
 	}
 }
 
-int	unset(char **cmd, t_env *env)
+int	unset(char **cmd, t_env *env, t_env *export)
 {
 	int	i;
 
@@ -47,6 +49,7 @@ int	unset(char **cmd, t_env *env)
 			i++;
 			continue ;
 		}
+		remove_variable(export, cmd[i]);
 		remove_variable(env, cmd[i]);
 		i++;
 	}
