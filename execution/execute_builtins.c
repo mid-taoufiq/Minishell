@@ -3,183 +3,212 @@
 /*                                                        :::      ::::::::   */
 /*   execute_builtins.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/05 11:43:56 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/12 15:52:44 by tibarike         ###   ########.fr       */
+/*   Updated: 2025/05/15 11:50:09 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int execute_echo(t_cmd *all_cmds, int i, int no_cmds, int p_fd[3])
+int	execute_echo(t_arg *arg, int i, int no_cmds, int p_fd[3])
 {
 	if (!fork())
 	{
-		if (all_cmds[i].fd)
+		get_pwd(2);
+		close_heredocs3(arg->all_cmds, i);
+		if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 		{
-			close(all_cmds[i].fd);
-			all_cmds[i].fd = 0;
-		}
-		if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+			(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+				free_env(arg->export));
 			exit(errno_to_estatus());
-		builtin_echo(all_cmds[i].cmd);
+		}
+		builtin_echo(arg->all_cmds[i].cmd);
+		(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+			free_env(arg->export));
 		exit(0);
 	}
+	if (arg->all_cmds[i].fd)
+		close(arg->all_cmds[i].fd);
 	return (0);
 }
 
-int execute_pwd(t_cmd *all_cmds, int i, int no_cmds, int p_fd[3])
+int	execute_pwd(t_arg *arg, int i, int no_cmds, int p_fd[3])
 {
 	if (!fork())
 	{
-		if (all_cmds[i].fd)
+		close_heredocs3(arg->all_cmds, i);
+		if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 		{
-			close(all_cmds[i].fd);
-			all_cmds[i].fd = 0;
+			(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+				free_env(arg->export));
+			(get_pwd(2), exit(errno_to_estatus()));
 		}
-		if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
-			exit(errno_to_estatus());
 		builtin_pwd();
+		get_pwd(2);
+		(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+			free_env(arg->export));
 		exit(0);
 	}
+	if (arg->all_cmds[i].fd)
+		close(arg->all_cmds[i].fd);
 	return (0);
 }
 
-int	execute_exit(t_cmd *all_cmds, int i, int no_cmds, int p_fd[3])
+int	execute_exit(t_arg *arg, int i, int no_cmds, int p_fd[3])
 {
 	if (no_cmds == 1)
 	{
-		if (all_cmds[i].fd)
+		if (arg->all_cmds[i].fd)
 		{
-			close(all_cmds[i].fd);
-			all_cmds[i].fd = 0;
+			close(arg->all_cmds[i].fd);
+			arg->all_cmds[i].fd = 0;
 		}
-		if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+		if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 			return (errno_to_estatus());
-		builtin_exit(all_cmds[i].cmd, no_cmds);
+		builtin_exit(arg, no_cmds, i);
 		return (0);
 	}
 	if (!fork())
 	{
-		if (all_cmds[i].fd)
+		get_pwd(2);
+		close_heredocs3(arg->all_cmds, i);
+		if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 		{
-			close(all_cmds[i].fd);
-			all_cmds[i].fd = 0;
-		}
-		if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+			(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+				free_env(arg->export));
 			exit(errno_to_estatus());
-		builtin_exit(all_cmds[i].cmd, no_cmds);
+		}
+		builtin_exit(arg, no_cmds, i);
 		exit(0);
 	}
+	if (arg->all_cmds[i].fd)
+		close(arg->all_cmds[i].fd);
 	return (0);
 }
 
-int	execute_unset(t_cmd *all_cmds, int i, t_arg arg, int p_fd[3])
+int	execute_unset(t_arg *arg, int i, int p_fd[3])
 {
 	int	no_cmds;
 	int	tmp;
 
-	no_cmds = count_cmds(all_cmds);
+	no_cmds = count_cmds(arg->all_cmds);
 	if (no_cmds == 1)
 	{
 		tmp = dup(1);
-		if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+		if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 			return (close(tmp), errno_to_estatus());
-		unset(all_cmds[i].cmd, arg.env, arg.export);
+		unset(arg->all_cmds[i].cmd, arg->env, arg->export);
 		dup2(tmp, 1);
 		close(tmp);
 		return (0);
 	}
 	if (!fork())
 	{
-		if (all_cmds[i].fd)
+		get_pwd(2);
+		close_heredocs3(arg->all_cmds, i);
+		if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 		{
-			close(all_cmds[i].fd);
-			all_cmds[i].fd = 0;
-		}
-		if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+			(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+				free_env(arg->export));
 			exit(errno_to_estatus());
-		unset(all_cmds[i].cmd, arg.env, arg.export);
+		}
+		unset(arg->all_cmds[i].cmd, arg->env, arg->export);
+		(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+			free_env(arg->export));
 		exit(0);
 	}
+	if (arg->all_cmds[i].fd)
+		close(arg->all_cmds[i].fd);
 	return (0);
 }
 
-int execute_env(t_cmd *all_cmds, int i, t_env *env, int p_fd[3])
+int	execute_env(t_arg *arg, int i, int p_fd[3])
 {
 	int	no_cmds;
 
-	no_cmds = count_cmds(all_cmds);
+	no_cmds = count_cmds(arg->all_cmds);
 	if (!fork())
 	{
-		if (all_cmds[i].fd)
+		get_pwd(2);
+		close_heredocs3(arg->all_cmds, i);
+		if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 		{
-			close(all_cmds[i].fd);
-			all_cmds[i].fd = 0;
-		}
-		if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+			(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+				free_env(arg->export));
 			exit(errno_to_estatus());
-		display_env(env);
+		}
+		display_env(arg->env);
+		(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+			free_env(arg->export));
 		exit(0);
 	}
+	if (arg->all_cmds[i].fd)
+		close(arg->all_cmds[i].fd);
 	return (0);
 }
 
-int	execute_cd(t_cmd *all_cmds, int i, t_arg arg, int p_fd[3])
+int	execute_cd(t_arg *arg, int i, int p_fd[3])
 {
 	int	tmp;
 	int	no_cmds;
 	int	status;
 
-	no_cmds = count_cmds(all_cmds);
+	no_cmds = count_cmds(arg->all_cmds);
 	tmp = dup(1);
-	if (all_cmds[i].fd)
+	if (arg->all_cmds[i].fd)
 	{
-		close(all_cmds[i].fd);
-		all_cmds[i].fd = 0;
+		close(arg->all_cmds[i].fd);
+		arg->all_cmds[i].fd = 0;
 	}
-	if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+	if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 		return (errno_to_estatus());
-	status =  builtin_cd(all_cmds[i].cmd, no_cmds, arg.env, arg.export);
+	status = builtin_cd(arg->all_cmds[i].cmd, no_cmds, arg->env, arg->export);
 	get_pwd(0);
 	(dup2(tmp, 1), close(tmp));
 	return (status);
 }
 
-int	execute_export(t_cmd *all_cmds, int i, t_arg arg, int p_fd[3])
+int	execute_export(t_arg *arg, int i, int p_fd[3])
 {
 	int	tmp;
 	int	no_cmds;
 
-	no_cmds = count_cmds(all_cmds);
+	no_cmds = count_cmds(arg->all_cmds);
 	if (no_cmds != 1)
 	{
 		if (!fork())
 		{
-			if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+			get_pwd(2);
+			close_heredocs3(arg->all_cmds, i);
+			if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 			{
-				(freencmds(all_cmds, no_cmds), free_env(arg.env), free_env(arg.export));
+				(freencmds(arg->all_cmds, no_cmds),
+					free_env(arg->env), free_env(arg->export));
 				exit(errno_to_estatus());
 			}
-			export(arg.env, arg.export, all_cmds[i].cmd);
-			(close(p_fd[0]), close(p_fd[1]));
+			export(arg->env, arg->export, arg->all_cmds[i].cmd);
+			(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+				free_env(arg->export));
 			exit(0);
 		}
+		if (arg->all_cmds[i].fd)
+			close(arg->all_cmds[i].fd);
 		return (0);
 	}
 	tmp = dup(1);
-	if (all_cmds[i].fd)
+	if (arg->all_cmds[i].fd)
 	{
-		close(all_cmds[i].fd);
-		all_cmds[i].fd = 0;
+		close(arg->all_cmds[i].fd);
+		arg->all_cmds[i].fd = 0;
 	}
-	if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
+	if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
 	{
 		close(tmp);
 		return (errno_to_estatus());
 	}
-	export(arg.env, arg.export, all_cmds[i].cmd);
+	export(arg->env, arg->export, arg->all_cmds[i].cmd);
 	dup2(tmp, 1);
 	close(tmp);
 	return (0);

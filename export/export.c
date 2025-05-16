@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 10:35:48 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/12 10:16:59 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/13 15:41:44 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void	chexitstatus(int status, t_env *env, t_env *exprt)
 	}
 }
 
-void choldpwd(t_env *env, t_env *exprt, char *new)
+void	choldpwd(t_env *env, t_env *exprt, char *new)
 {
 	char	*tmp;
 
@@ -87,7 +87,7 @@ void choldpwd(t_env *env, t_env *exprt, char *new)
 	}
 }
 
-void chpwd(t_env *env, t_env *exprt, char *new)
+void	chpwd(t_env *env, t_env *exprt, char *new)
 {
 	char	*tmp;
 
@@ -116,7 +116,6 @@ void chpwd(t_env *env, t_env *exprt, char *new)
 		exprt = exprt->next;
 	}
 }
-
 
 static void	display_export(t_env *env)
 {
@@ -169,8 +168,8 @@ static void	append_env(t_env *head, t_env *new)
 
 int	export(t_env *env, t_env *exprt, char **cmd)
 {
-	int i;
-	int j;
+	int	i;
+	int	j;
 
 	j = 1;
 	if (ft_dstrlen(cmd) == 1)
@@ -201,8 +200,10 @@ int	export(t_env *env, t_env *exprt, char **cmd)
 		}
 		if (!ft_strcmp(cmd[j], "PATH") && env->i)
 		{
-			push_env(env, new_env("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"));
-			push_export(exprt, new_env("PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"));
+			push_env(env, new_env("PATH=/usr/local/sbin:/usr/local/bin"
+					":/usr/sbin:/usr/bin:/sbin:/bin"));
+			push_export(exprt, new_env("PATH=/usr/local/sbin:/usr/local/bin"
+					":/usr/sbin:/usr/bin:/sbin:/bin"));
 			env->i = 0;
 		}
 		else if (cmd[j][i] == '=' || cmd[j][i] == '\0')

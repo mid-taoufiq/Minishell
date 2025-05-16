@@ -6,16 +6,16 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/26 14:10:49 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/09 14:07:55 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/13 15:46:27 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "minishell.h"
+#include "minishell.h"
 
 void	remove_variable(t_env *env, char *key)
 {
-	t_env *last;
-	t_env *tmp;
+	t_env	*last;
+	t_env	*tmp;
 
 	if (!ft_strcmp(key, "PATH"))
 		env->i = 0;

@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/14 14:02:31 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/08 11:37:56 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/13 20:40:23 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@ char	*ft_strindup(char *s, int *i)
 {
 	int		ii;
 	char	*ret;
-	char	c;
 
 	ii = 0;
 	while (!is_whitespace(s[ii]))
@@ -35,24 +34,7 @@ char	*ft_strindup(char *s, int *i)
 	ret = malloc((ii + 1) * sizeof(char));
 	if (!ret)
 		return (NULL);
-	ii = 0;
-	while (!is_whitespace(s[ii]))
-	{
-		if (is_quote(s[ii]))
-		{
-			c = s[ii];
-			ret[ii] = s[ii];
-			ii++;
-			while (s[ii] != c)
-			{
-				ret[ii] = s[ii];
-				ii++;
-			}
-		}
-		ret[ii] = s[ii];
-		ii++;
-	}
-	ret[ii] = '\0';
+	ii = fill_split_string(s, ret);
 	*i = *i + ii;
 	return (ret);
 }
@@ -60,8 +42,8 @@ char	*ft_strindup(char *s, int *i)
 int	wordcount(char *s)
 {
 	int	i;
-	int q;
-	int count;
+	int	q;
+	int	count;
 	int	f;
 
 	i = 0;
@@ -72,14 +54,7 @@ int	wordcount(char *s)
 	{
 		if (is_whitespace(s[i]) && q == 0)
 			f = 1;
-		if (s[i] == '\'' && q == 0)
-			q = 1;
-		else if (s[i] == '\'' && q == 1)
-			q = 0;
-		else if (s[i] == '\"' && q == 0)
-			q = 2;
-		else if (s[i] == '\"' && q == 2)
-			q = 0;
+		change_quotes(s[i], &q);
 		if (f == 1 && !is_whitespace(s[i]))
 		{
 			count++;
@@ -90,17 +65,11 @@ int	wordcount(char *s)
 	return (count);
 }
 
-static void	freedbl(char **dbl, int size)
+static void	init(int *i, int *f, int *count)
 {
-	int		i;
-
-	i = 0;
-	while (i < size)
-	{
-		free(dbl[i]);
-		i++;
-	}
-	free(dbl);
+	*i = 0;
+	*f = 1;
+	*count = 0;
 }
 
 char	**ft_split_input(char *str)
@@ -110,9 +79,7 @@ char	**ft_split_input(char *str)
 	int		count;
 	int		f;
 
-	i = 0;
-	f = 1;
-	count = 0;
+	init(&i, &f, &count);
 	ret = malloc((wordcount(str) + 1) * sizeof(char *));
 	if (!ret)
 		return (NULL);
@@ -124,13 +91,12 @@ char	**ft_split_input(char *str)
 		{
 			ret[count] = ft_strindup(str + i, &i);
 			if (!ret[count])
-				return (freedbl(ret, count) , NULL);
+				return (freedblchar(ret, count), NULL);
 			count++;
 			f = 0;
 			continue ;
 		}
 		i++;
 	}
-	ret[count] = NULL;
-	return (ret);
+	return (ret[count] = NULL, ret);
 }

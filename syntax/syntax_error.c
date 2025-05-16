@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/13 15:29:19 by tibarike          #+#    #+#             */
-/*   Updated: 2025/05/09 13:47:48 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/13 15:49:45 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,8 @@ static bool	check_redirections(char *str, int i, int count, char redire)
 				count++;
 			while (is_whitespace(str[i]) && str[i])
 				i++;
-			if (count > 2 || str[i] == '|' || str[i] == '>' || str[i] == '<' || !str[i])
+			if (count > 2 || str[i] == '|' || str[i] == '>'
+				|| str[i] == '<' || !str[i])
 				return (false);
 		}
 		else

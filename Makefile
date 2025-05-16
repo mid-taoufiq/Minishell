@@ -1,10 +1,12 @@
 CC = cc
 CFLAGS = -Wall -Werror -Wextra
 RFLAGS = -lreadline -lncurses
-SRCS = main.c syntax/syntax_error.c syntax/utils.c syntax/check_quotes.c split_input.c pipe_split/ft_split_pipe.c pipe_split/utils.c sep_redirection.c expanding.c \
-		export/export.c export/utils.c quotes_remover.c export/unset.c export/sortenv.c export/utils2.c \
+SRCS = main.c syntax/syntax_error.c syntax/utils.c syntax/check_quotes.c split_input/split_input.c split_input/utils.c \
+		pipe_split/ft_split_pipe.c pipe_split/utils.c sep_redirection.c expanding.c \
+		export/export.c export/utils.c remove_quotes/quotes_remover.c remove_quotes/utils.c \
+		export/unset.c export/sortenv.c export/utils2.c execution/utils.c \
 		execution/open_redirections.c execution/execute_cmds.c execution/built_ins.c execution/execute.c \
-		execution/execute_builtins.c signal_handler.c insert.c
+		execution/execute_builtins.c signal_handler.c insert.c expanding/extract_dollar.c expanding/expand_parse.c
 OBJECTS = $(SRCS:%.c=%.o)
 LIBFT_SRCS = libft/ft_atol.c libft/ft_bzero.c libft/ft_calloc.c libft/ft_isalnum.c libft/ft_isalpha.c \
             libft/ft_isascii.c libft/ft_isdigit.c libft/ft_isprint.c libft/ft_itoa.c libft/ft_memchr.c \
@@ -22,7 +24,6 @@ LIBFT_OBJS= $(LIBFT_SRCS:libft/%.c=libft/%.o)
 NAME = minishell
 
 all: $(NAME)
-	make clean && clear
 
 libft/%.o : libft/%.c libft/libft.h
 	$(CC) $(CFLAGS) -c $< -I libft/ -o $@

@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/23 10:57:49 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/11 17:54:07 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/14 15:27:20 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,12 +61,14 @@ t_env	*new_env(char *env)
 	return (ret);
 }
 
-void	push_env(t_env *head, t_env *new)
+t_env	*push_env(t_env *head, t_env *new)
 {
-	t_env *last;
+	t_env	*last;
+	t_env	*hhead;
 
+	hhead = head;
 	if (!new)
-		return (perror("export error"));
+		return (perror("export error"), NULL);
 	while (head)
 	{
 		if (head->key && !ft_strcmp(head->key, new->key))
@@ -76,19 +78,20 @@ void	push_env(t_env *head, t_env *new)
 				free(new->key);
 				free(new->value);
 				free(new);
-				return ;
+				return (hhead);
 			}
 			free(new->key);
 			free(head->value);
 			head->value = new->value;
 			head->empty = new->empty;
 			free(new);
-			return ;
+			return (hhead);
 		}
 		last = head;
 		head = head->next;
 	}
 	last->next = new;
+	return (hhead);
 }
 
 void	free_env(t_env *env)
@@ -105,17 +108,21 @@ void	free_env(t_env *env)
 	}
 }
 
-void	update_shlvl(t_env *env)
+int	update_shlvl(t_env *env)
 {
 	char	*val;
 	int		num;
 	int		ss;
 
 	val = ft_getenv(env, "SHLVL");
+	if (!val)
+		return (1);
 	num = (int)ft_atol(val, &ss);
 	num++;
 	free(val);
 	val = ft_itoa(num);
+	if (!val)
+		return (1);
 	env = env->next;
 	while (env)
 	{
@@ -123,16 +130,19 @@ void	update_shlvl(t_env *env)
 		{
 			if (!ft_strcmp(env->value, "999"))
 			{
-				ft_putstr_fd("warning: shell level (1000) too high, resetting to 1\n", 2);
+				ft_putstr_fd("warning: shell level (1000)"
+					" too high, resetting to 1\n", 2);
 				(free(env->value), free(val), env->value = ft_strdup("1"));
-				return ;
+				return (0);
 			}
 			free(env->value);
 			env->value = val;
-			return ;
+			return (0);
 		}
 		env = env->next;
 	}
+	free(val);
+	return (0);
 }
 
 t_env	*duplicate_env(char **env)
@@ -141,6 +151,7 @@ t_env	*duplicate_env(char **env)
 	t_env	*head;
 	char	*tmp;
 	char	*tmp2;
+	t_env	*ttmp;
 
 	i = 0;
 	head = new_env(NULL);
@@ -149,23 +160,44 @@ t_env	*duplicate_env(char **env)
 		head->i = 1;
 		tmp = getcwd(NULL, 0);
 		tmp2 = ft_strjoin("PWD=", tmp);
+		if (!tmp2)
+			return (free(tmp), free_env(head), NULL);
 		free(tmp);
-		push_env(head, new_env(tmp2));
+		ttmp = push_env(head, new_env(tmp2));
+		if (!ttmp)
+			return (free_env(head), free(tmp2), NULL);
 		free(tmp2);
-		push_env(head, new_env("SHLVL=1"));
-		push_env(head, new_env("_=/usr/bin/env"));
-		push_env(head, new_env("OLDPWD"));
-		push_env(head, new_env("?=0"));
+		ttmp = push_env(head, new_env("SHLVL=1"));
+		if (!ttmp)
+			return (free_env(head), NULL);
+		ttmp = push_env(head, new_env("_=/usr/bin/env"));
+		if (!ttmp)
+			return (free_env(head), NULL);
+		ttmp = push_env(head, new_env("OLDPWD"));
+		if (!ttmp)
+			return (free_env(head), NULL);
+		ttmp = push_env(head, new_env("?=0"));
+		if (!ttmp)
+			return (free_env(head), NULL);
 		return (head);
 	}
 	head->i = 0;
 	while (env[i])
-		(push_env(head, new_env(env[i])), i++);
-	if (!(tmp = ft_getenv(head, "PATH")))
+	{
+		ttmp = push_env(head, new_env(env[i]));
+		if (!ttmp)
+			return (free_env(head), NULL);
+		i++;
+	}
+	tmp = ft_getenv(head, "PATH");
+	if (!tmp)
 		head->i = 1;
 	free(tmp);
-	update_shlvl(head);
-	push_env(head, new_env("?=0"));
+	if (update_shlvl(head))
+		return (free_env(head), NULL);
+	ttmp = push_env(head, new_env("?=0"));
+	if (!ttmp)
+		return (free_env(head), NULL);
 	return (head);
 }
 

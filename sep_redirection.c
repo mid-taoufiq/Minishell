@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/17 15:02:05 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/04/21 21:13:46 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/13 16:09:24 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ void	skip(char quote, int *i, char *str)
 	(*i)++;
 }
 
-void	skip2(int *i, int *j, char *str, char *str2)
+char	skip2(int *i, int *j, char *str, char *str2)
 {
 	char	quote;
 
@@ -39,6 +39,7 @@ void	skip2(int *i, int *j, char *str, char *str2)
 	str2[*j] = str[*i];
 	(*i)++;
 	(*j)++;
+	return (1);
 }
 
 static int	space_needed(char *s)
@@ -87,11 +88,8 @@ char	*seperate_redirections(char *s, int i, int j, char c)
 		return (NULL);
 	while (j < size)
 	{
-		if (is_quote(s[i]))
-		{
-			skip2(&i, &j, s, new);
+		if (is_quote(s[i]) && skip2(&i, &j, s, new))
 			continue ;
-		}
 		if (s[i] == '>' || s[i] == '<')
 			c = s[i];
 		if (s[i] == c && (i != 0 && s[i - 1] != c && !is_whitespace(s[i - 1])))

@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   execute_cmds.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tibarike <tibarike@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/29 10:44:58 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/12 14:05:23 by tibarike         ###   ########.fr       */
+/*   Updated: 2025/05/15 13:20:05 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static void free_dbl_ptr(char **ptr, int i)
+static void	free_dbl_ptr(char **ptr, int i)
 {
 	while (ptr[i])
 	{
@@ -20,6 +20,19 @@ static void free_dbl_ptr(char **ptr, int i)
 		i++;
 	}
 	free(ptr);
+}
+
+int	check_dir(char *path)
+{
+	struct stat	info;
+
+	stat(path, &info);
+	if (S_ISDIR(info.st_mode))
+	{
+		errno = EACCES;
+		return (1);
+	}
+	return (0);
 }
 
 char	*check_commands(t_env *env, char *cmd)
@@ -31,15 +44,17 @@ char	*check_commands(t_env *env, char *cmd)
 
 	if (cmd[0] == '\0')
 		return (access(cmd, X_OK), perror("\"\""), NULL);
-	if (access(cmd, X_OK) == 0 && ft_strchr(cmd, '/') != NULL)
+	if (!access(cmd, X_OK) && ft_strchr(cmd, '/') && !check_dir(cmd))
 		return (ft_strdup(cmd));
-	if (ft_strchr(cmd, '/') != NULL && access(cmd, X_OK) != 0)
+	if (ft_strchr(cmd, '/') && (access(cmd, X_OK) || check_dir(cmd)))
 		return (perror(cmd), NULL);
-	if (!(tmp = ft_getenv(env, "PATH")))
+	tmp = ft_getenv(env, "PATH");
+	if (!tmp)
 	{
 		if (env->i)
-			tmp = ft_strdup("/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
-		else if (access(cmd, X_OK) == 0)
+			tmp = ft_strdup("/usr/local/sbin:/usr/local/bin"
+					":/usr/sbin:/usr/bin:/sbin:/bin");
+		else if (access(cmd, X_OK) == 0 && !check_dir(cmd))
 			return (ft_strdup(cmd));
 		else
 			return (perror(cmd), NULL);
@@ -53,7 +68,7 @@ char	*check_commands(t_env *env, char *cmd)
 		free(paths[i]);
 		file_path = ft_strjoin(tmp, cmd);
 		free(tmp);
-		if (access(file_path, X_OK) == 0)
+		if (access(file_path, X_OK) == 0 && !check_dir(file_path))
 			return (free_dbl_ptr(paths, i + 1), file_path);
 		free(file_path);
 		i++;
@@ -115,48 +130,73 @@ int	errno_to_estatus(void)
 	return (1);
 }
 
-int	execute_others(t_cmd cmd, t_cmd *all_cmds, t_env *env, t_env *exprt)
+void	close_heredocs3(t_cmd *all_cmds, int cmd)
+{
+	int	i;
+
+	i = 0;
+	while (all_cmds[i].cmd)
+	{
+		if (i == cmd)
+		{
+			i++;
+			continue;
+		}
+		if (all_cmds[i].fd)
+			close(all_cmds[i].fd);
+		i++;
+	}
+}
+
+int	execute_others(t_arg *arg, int i, int no_cmds)
 {
 	char	*cmd_path;
-	int		no_cmds;
 	char	**dblenv;
 
-	no_cmds = count_cmds(all_cmds);
-	dblenv = envlst_to_array(env);
-	if (!cmd.cmd[0] || !dblenv)
+	dblenv = envlst_to_array(arg->env);
+	if (!arg->all_cmds[i].cmd[0] || !dblenv)
 	{
-		(freencmds(all_cmds, no_cmds), free_env(env), free_env(exprt));
+		(freencmds(arg->all_cmds, no_cmds), free_env(arg->env), free_env(arg->export));
 		exit(1);
 	}
-	cmd_path = check_commands(env, cmd.cmd[0]);
+	cmd_path = check_commands(arg->env, arg->all_cmds[i].cmd[0]);
 	if (!cmd_path)
 	{
-		(freencmds(all_cmds, no_cmds), free_env(env), free_env(exprt));
+		(freencmds(arg->all_cmds, no_cmds), free_env(arg->env), free_env(arg->export));
 		exit(errno_to_estatus());
 	}
-	execve(cmd_path, cmd.cmd, dblenv);
-	perror("execve");
-	(freencmds(all_cmds, no_cmds), free_env(env), free_env(exprt));
+	(free_env(arg->env), free_env(arg->export));
+	execve(cmd_path, arg->all_cmds[i].cmd, dblenv);
+	if (access(cmd_path, X_OK))
+		perror("execve");
+	(freencmds(arg->all_cmds, no_cmds), free_dbl_ptr(dblenv, 0));
 	exit(errno_to_estatus());
 }
 
-int	execute_others_main(t_cmd *all_cmds, int i, t_arg arg, int p_fd[3])
+int	execute_others_main(t_arg *arg, int i, int p_fd[3])
 {
 	int		no_cmds;
 	pid_t	pid;
 	int		status;
-	
-	no_cmds = count_cmds(all_cmds);
+
+	no_cmds = count_cmds(arg->all_cmds);
 	g_herdoc_signal = 1;
 	pid = fork();
 	if (!pid)
 	{
+		get_pwd(2);
 		signal(SIGQUIT, sigquit_handler);
-		if (redirect(all_cmds[i], p_fd, i, no_cmds) == -1)
-			(freencmds(all_cmds, no_cmds), free_env(arg.env), free_env(arg.export), exit(1));
+		close_heredocs3(arg->all_cmds, i);
+		if (redirect(arg->all_cmds[i], p_fd, i, no_cmds) == -1)
+		{
+			(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+				free_env(arg->export), exit(1));
+		}
 		if (!fork())
-			execute_others(all_cmds[i], all_cmds, arg.env, arg.export);
+			execute_others(arg, i, no_cmds);
 		wait(&status);
+		(freencmds(arg->all_cmds, no_cmds), free_env(arg->env),
+			free_env(arg->export));
 		if (WIFSIGNALED(status))
 		{
 			if (WTERMSIG(status) == SIGINT)
@@ -166,7 +206,7 @@ int	execute_others_main(t_cmd *all_cmds, int i, t_arg arg, int p_fd[3])
 		}
 		exit(WEXITSTATUS(status));
 	}
-	if (p_fd[2])
-		(close(p_fd[2]), p_fd[2] = 0);
+	if (arg->all_cmds[i].fd)
+			close(arg->all_cmds[i].fd);
 	return (0);
 }
