@@ -1,8 +1,18 @@
-
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   extract_dollar.c                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/16 15:38:24 by tibarike          #+#    #+#             */
+/*   Updated: 2025/05/21 16:42:37 by ayel-arr         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "minishell.h"
 
-static char	*push_char2(char *s, char c)
+char	*push_char2(char *s, char c)
 {
 	char	temp[2];
 
@@ -17,7 +27,7 @@ static char	*replace_expand_quotes(char *s)
 	int		i;
 
 	if (!s)
-		return (NULL);
+		return (ft_strdup(""));
 	i = 0;
 	while (s[i])
 	{
@@ -30,7 +40,7 @@ static char	*replace_expand_quotes(char *s)
 	return (s);
 }
 
-static char	*question_mark(t_env *envs, char *res, int *i)
+char	*question_mark(t_env *envs, char *res, int *i)
 {
 	char	*val;
 	char	*var;
@@ -46,7 +56,7 @@ static char	*question_mark(t_env *envs, char *res, int *i)
 	return (var);
 }
 
-static char *normal_var(char *str, int *i, char *res, t_env *envs)
+static char	*normal_var(char *str, int *i, char *res, t_env *envs)
 {
 	int		start;
 	int		len;
@@ -76,20 +86,7 @@ char	*exctract_dollar(char *str, int *i, char *res, t_env *envs)
 {
 	char	*var;
 
-	(*i)++;
-	var = ft_strdup("");
-	if (str[*i] == '?')
-		return (free (var), question_mark(envs, res, i));
-	if (ft_isalpha(str[*i]) || str[*i] == '_')
-	{
-		free (var);
-		var = normal_var(str, i, res, envs);
-	}
-	else if (!ft_isalpha(str[*i]) && str[*i] != '_')
-	{
-		free(var);
-		var = push_char2(res, '$');
-	}
+	var = normal_var(str, i, res, envs);
 	if (!var)
 		return (free(res), NULL);
 	free(res);

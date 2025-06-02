@@ -25,7 +25,7 @@ t_env	*duplicate_node(t_env *node)
 		return (free(new), NULL);
 	new->value = ft_strdup(node->value);
 	if (!new->value && node->value)
-		return (free(new->key), free(new), NULL);
+		return (free(new), free(new->key), NULL);
 	new->next = NULL;
 	return (new);
 }

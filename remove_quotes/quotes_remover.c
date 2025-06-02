@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/26 11:20:40 by ayel-arr          #+#    #+#             */
-/*   Updated: 2025/05/14 10:44:14 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/20 17:44:03 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ static int	is_there_quote(char *s)
 	return (0);
 }
 
-static void	replace_expand_quotes1(char *s)
+void	replace_expand_quotes1(char *s)
 {
 	int		i;
 

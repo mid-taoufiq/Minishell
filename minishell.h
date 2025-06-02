@@ -6,7 +6,7 @@
 /*   By: ayel-arr <ayel-arr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/09 13:12:13 by tibarike          #+#    #+#             */
-/*   Updated: 2025/05/15 14:43:04 by ayel-arr         ###   ########.fr       */
+/*   Updated: 2025/05/28 15:38:54 by ayel-arr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 
 # include <sys/stat.h>
 # include <stdio.h>
-# include <limits.h>
 # include <stdlib.h>
 # include <stdbool.h>
 # include <readline/readline.h>
@@ -68,8 +67,14 @@ typedef struct s_arg
 	t_env	*export;
 }	t_arg;
 
+void	freedbl(void **ptr);
+void	extract_redirections_from_cmd(char **cmd, t_redr *redirections);
+int		exe_arg_len(char **cmd);
+int		redirections_len(char **cmd);
+void	extract_exe_arg_from_cmd(char **cmd, char **dst);
+char	get_redirection_type(char *str);
 int		valid_quotes(char	*str);
-bool	validate_input(char *input);
+bool	validate_input(char *input, t_env *envs, t_env *s_env);
 char	**ft_split_input(char *str);
 char	**ft_split_pipe(char const *s, char c);
 char	*seperate_redirections(char *s, int i, int j, char c);
@@ -80,7 +85,7 @@ void	push_char(char **s, char c);
 void	builtin_pwd(void);
 int		builtin_cd(char **args, int cmds_size, t_env *env, t_env *exprt);
 void	builtin_echo(char **args);
-int		builtin_exit(t_arg *arg, int cmds_size, int n);
+int		builtin_exit(t_arg *arg, int cmds_size, int n, int i);
 t_env	*new_env(char *env);
 t_env	*push_env(t_env *head, t_env *new);
 char	*ft_getenv(t_env *envs, char *key);
@@ -131,6 +136,23 @@ int		pre_execution(t_arg *arg, int *no_cmds, int p_fd[3]);
 int		pipe_shit(int i, int no_cmds, int p_fd[3]);
 int		execute_builtins(t_arg *arg, int i, int *status, int p_fd[3]);
 int		here_doc(t_arg *arg, int p_fd[3], int no_cmds);
-void	execution_epilogue(int no_cmds, int p_fd[3], int *status);
-
+int		execution_epilogue(int no_cmds, int p_fd[3], int *status);
+char	*push_char2(char *s, char c);
+char	*question_mark(t_env *envs, char *res, int *i);
+char	**envlst_to_array(t_env *env);
+void	close_heredocs3(t_cmd *all_cmds, int cmd);
+int		check_dir(char *path);
+int		errno_to_estatus(void);
+void	check_0_fd(int fd);
+int		space_separated(char *str);
+int		open_infile(char *filename, char error);
+int		open_outfile(char *filename, char error);
+int		open_append_file(char *filename, char error);
+char	*get_filename(int fd[2], int n);
+void	write_in_file_child(char *lim, int args[4], t_arg *arg);
+int		execute_exit_pipe(t_arg *arg, int i, int no_cmds, int p_fd[3]);
+int		execute_unset_pipe(t_arg *arg, int i, int p_fd[3], int no_cmds);
+int		execute_export_pipe(t_arg *arg, int i, int p_fd[3], int no_cmds);
+void	replace_expand_quotes1(char *s);
+void	chpwd2(t_env *exprt, char *new);
 #endif
